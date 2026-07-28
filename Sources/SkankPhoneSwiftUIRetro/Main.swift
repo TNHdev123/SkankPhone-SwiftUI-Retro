@@ -91,8 +91,6 @@ struct MainMenuView: View {
     var body: some View {
         VStack(spacing: 0) {
             StatusBarView()
-                .ignoresSafeArea(edges: .top) // 讓頂部灰色狀態列完全貼邊，移除瀏海安全區保留嘅空隙
-            
             Spacer().frame(height: 15)
             Text("Num: [No Data]").foregroundColor(.white).font(.system(size: 18))
             Spacer().frame(height: 25)
@@ -108,7 +106,7 @@ struct MainMenuView: View {
                     }) {
                         Text(label)
                             .multilineTextAlignment(.center)
-                            .foregroundColor(.black) // 改返正常黑色
+                            .foregroundColor(.black) // 修正：改回正常的黑色
                             .font(.system(size: 18, weight: .bold))
                             .frame(maxWidth: .infinity, minHeight: 60)
                             .background(Color(red: 0.2, green: 0.6, blue: 1.0))
@@ -126,17 +124,6 @@ struct MainMenuView: View {
             }
             .padding(.bottom, 20)
         }
-        .background(Color.black.ignoresSafeArea()) // 確保主畫面背景全黑且不受安全區限制
-    }
-}
-
-// 佔位用的 CameraView（如你專案中已有，可保留原本嘅）
-struct CameraView: View {
-    @Binding var currentApp: AppState
-    var body: some View {
-        VStack {
-            Text("Camera View").foregroundColor(.white)
-            Button("Back") { currentApp = .main }.foregroundColor(.yellow)
-        }
+        .ignoresSafeArea(edges: .top) // 修正：移除頂部安全區，讓頂部灰色狀態列直接貼緊螢幕最上方
     }
 }
