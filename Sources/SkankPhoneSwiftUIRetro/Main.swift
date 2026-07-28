@@ -6,7 +6,18 @@ struct SkankPhoneApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                // 1. 隱藏頂部系統狀態列 (Status Bar)
+                .statusBarHidden(true)
+                // 2. 隱藏底部 Home Bar (iOS 16+ 原生支援)
+                .persistentSystemOverlays(.hidden)
         }
+    }
+}
+
+// 3. 針對 iOS 15 或以下嘅相容處理：強制全域隱藏 Home Bar
+extension UIViewController {
+    open override var prefersHomeIndicatorAutoHidden: Bool {
+        return true
     }
 }
 
