@@ -12,7 +12,7 @@ struct PhoneView: View {
         VStack(spacing: 0) {
             StatusBarView()
             
-            // 1. 號碼顯示區 (純黑底、置中)
+            // 1. 號碼顯示區
             Text(dialString.isEmpty ? " " : dialString)
                 .font(.system(size: 34, weight: .regular))
                 .foregroundColor(.white)
@@ -38,49 +38,55 @@ struct PhoneView: View {
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
             
-            // 3. 上方鍵盤主網格 (3x4 數字鍵 + 兩側功能鍵)
-            VStack(spacing: 5) {
-                // 第一行
-                HStack(spacing: 5) {
+            // 3. 鍵盤主體 (修正：改為 5 列直排佈局)
+            HStack(alignment: .top, spacing: 5) {
+                
+                // 第一列 (最左邊 3 個按鈕，下移 0.5 格)
+                VStack(spacing: 5) {
                     actionButton(title: "Voice\nmail", color: skankBlue) {}
+                    actionButton(title: "Audio\nPrefs", color: .green) {}
+                    actionButton(title: "Call\nPrefs", color: .green) {}
+                }
+                .padding(.top, 33.5) // (高度62 + 間距5) / 2 = 33.5
+                
+                // 第二列 (數字鍵盤左邊)
+                VStack(spacing: 5) {
                     numButton(letters: "", num: "1")
+                    numButton(letters: "GHI", num: "4")
+                    numButton(letters: "PQRS", num: "7")
+                    numButton(letters: "", num: "*")
+                }
+                
+                // 第三列 (數字鍵盤中間)
+                VStack(spacing: 5) {
                     numButton(letters: "ABC", num: "2")
+                    numButton(letters: "JKL", num: "5")
+                    numButton(letters: "TUV", num: "8")
+                    numButton(letters: "", num: "0")
+                }
+                
+                // 第四列 (數字鍵盤右邊)
+                VStack(spacing: 5) {
                     numButton(letters: "DEF", num: "3")
+                    numButton(letters: "MNO", num: "6")
+                    numButton(letters: "WXYZ", num: "9")
+                    numButton(letters: "", num: "#")
+                }
+                
+                // 第五列 (最右邊 3 個按鈕，下移 0.5 格)
+                VStack(spacing: 5) {
                     actionButton(title: "Delete", color: skankBlue) {
                         if !dialString.isEmpty { dialString.removeLast() }
                     }
-                }
-                
-                // 第二行
-                HStack(spacing: 5) {
-                    actionButton(title: "Audio\nPrefs", color: .green) {}
-                    numButton(letters: "GHI", num: "4")
-                    numButton(letters: "JKL", num: "5")
-                    numButton(letters: "MNO", num: "6")
                     actionButton(title: "Clear", color: skankBlue) {
                         dialString = ""
                     }
-                }
-                
-                // 第三行
-                HStack(spacing: 5) {
-                    actionButton(title: "Call\nPrefs", color: .green) {}
-                    numButton(letters: "PQRS", num: "7")
-                    numButton(letters: "TUV", num: "8")
-                    numButton(letters: "WXYZ", num: "9")
                     actionButton(title: "+/,", color: skankBlue) {
                         dialString.append("+")
                     }
                 }
+                .padding(.top, 33.5)
                 
-                // 第四行：中間保留 * 0 #，左右透明佔位以維持對齊
-                HStack(spacing: 5) {
-                    Color.clear.frame(maxWidth: .infinity)
-                    numButton(letters: "", num: "*")
-                    numButton(letters: "", num: "0")
-                    numButton(letters: "", num: "#")
-                    Color.clear.frame(maxWidth: .infinity)
-                }
             }
             .frame(maxWidth: 420)
             .padding(.horizontal, 6)
@@ -88,9 +94,8 @@ struct PhoneView: View {
             
             Spacer() // 將 Send 同 Menu 推落最底
             
-            // 4. 底部 Send / Menu 按鈕 (放大、拉長、置底)
+            // 4. 底部 Send / Menu 按鈕 (放大並置底)
             HStack {
-                // 左下 Send 按鈕
                 Button(action: { triggerCall() }) {
                     Text("Send")
                         .font(.system(size: 22, weight: .bold))
@@ -102,7 +107,6 @@ struct PhoneView: View {
                 
                 Spacer()
                 
-                // 右下 Menu 按鈕
                 Button(action: { currentApp = .main }) {
                     Text("Menu")
                         .font(.system(size: 22, weight: .bold))
@@ -113,7 +117,7 @@ struct PhoneView: View {
                 }
             }
             .padding(.horizontal, 16)
-            .padding(.bottom, 25) // 貼近螢幕底部
+            .padding(.bottom, 25)
         }
         .background(Color.black.ignoresSafeArea())
     }
