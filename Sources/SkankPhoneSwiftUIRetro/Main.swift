@@ -56,7 +56,7 @@ struct StatusBarView: View {
     }
 }
 
-// 根視圖：負責切換畫面
+// 根視圖：負責切換畫面（在此處進行全域安全區控制）
 struct RootView: View {
     @State private var currentApp: AppState = .main
     
@@ -64,14 +64,18 @@ struct RootView: View {
         ZStack {
             Color.black.ignoresSafeArea()
             
-            switch currentApp {
-            case .main:
-                MainMenuView(currentApp: $currentApp)
-            case .phone:
-                PhoneView(currentApp: $currentApp)
-            case .camera:
-                CameraView(currentApp: $currentApp)
+            // 用 Group 包住切換邏輯，全域移除頂部安全區
+            Group {
+                switch currentApp {
+                case .main:
+                    MainMenuView(currentApp: $currentApp)
+                case .phone:
+                    PhoneView(currentApp: $currentApp)
+                case .camera:
+                    CameraView(currentApp: $currentApp)
+                }
             }
+            .ignoresSafeArea(edges: .top) // <- 全域生效，所有子畫面頂部都會貼緊螢幕最上方
         }
     }
 }
