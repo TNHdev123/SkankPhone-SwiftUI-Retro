@@ -13,25 +13,57 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Xcode
-        uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version: latest-stable
-
-      - name: Build Swift Package App
+      - name: Build Swift Package with Xcode
         run: |
-          xcodebuild -scheme SkankPhoneSwiftUIRetro \
-            -sdk iphoneos \
+          xcodebuild -package-path . \
+            -scheme SkankPhoneSwiftUIRetro \
+            -destination 'generic/platform=iOS' \
             -configuration Release \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
-            CONFIGURATION_BUILD_DIR=build
+            BUILD_DIR=build
 
       - name: Package to IPA
         run: |
           mkdir -p Payload
-          mv build/SkankPhoneSwiftUIRetro.app Payload/
+          
+          # 自動尋找編譯出的 .app 套件或執行檔
+          APP_DIR=$(find build -name "*.app" -type d | head -n 1)
+          
+          if [ -n "$APP_DIR" ]; then
+            cp -R "$APP_DIR" Payload/
+          else
+            mkdir -p Payload/SkankPhoneSwiftUIRetro.app
+            EXEC_FILE=$(find build -name "SkankPhoneSwiftUIRetro" -type f | head -n 1)
+            cp "$EXEC_FILE" Payload/SkankPhoneSwiftUIRetro.app/SkankPhoneSwiftUIRetro
+            
+            cat << 'EOF' > Payload/SkankPhoneSwiftUIRetro.app/Info.plist
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>CFBundleIdentifier</key>
+              <string>com.retro.SkankPhoneSwiftUIRetro</string>
+              <key>CFBundleName</key>
+              <string>SkankPhoneSwiftUIRetro</string>
+              <key>CFBundleExecutable</key>
+              <string>SkankPhoneSwiftUIRetro</string>
+              <key>CFBundleVersion</key>
+              <string>1</string>
+              <key>CFBundleShortVersionString</key>
+              <string>1.0</string>
+              <key>CFBundleSupportedPlatforms</key>
+              <array>
+                  <string>iPhoneOS</string>
+              </array>
+              <key>MinimumOSVersion</key>
+              <string>15.0</string>
+          </dict>
+          </plist>
+          EOF
+          fi
+
           zip -r SkankPhoneSwiftUIRetro.ipa Payload
 
       - name: Upload IPA Artifact
