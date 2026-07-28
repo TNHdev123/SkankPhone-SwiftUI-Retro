@@ -14,7 +14,7 @@ struct PhoneView: View {
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity, alignment: .center)
                 .padding(.vertical, 10)
-                .background(Color(white: 0.2)) // 模擬顯示螢幕底色
+                .background(Color(white: 0.0)) // 模擬顯示螢幕底色
             
             // 頂部小按鈕
             HStack {
@@ -70,11 +70,11 @@ struct PhoneView: View {
                     actionButton(title: "Clear", color: Color(red: 0.2, green: 0.6, blue: 1.0), height: 60) {
                         dialString = ""
                     }
-                    actionButton(title: "+/,", color: Color(red: 0.2, green: 0.6, blue: 1.0), height: 60) {
+                    actionButton(title: "+/-", color: Color(red: 0.2, green: 0.6, blue: 1.0), height: 60) {
                         dialString.append("+")
                     }
                     Spacer()
-                    actionButton(title: "Menu", color: .orange, height: 50) {
+                    actionButton(title: "Menu", color: .red, height: 50) {
                         currentApp = .main
                     }
                 }
@@ -93,7 +93,7 @@ struct PhoneView: View {
             Text(title)
                 .multilineTextAlignment(.center)
                 .font(.system(size: 14))
-                .foregroundColor(color == .orange || color == .green ? .black : .init(red: 0.1, green: 0.1, blue: 0.4))
+                .foregroundColor(color == .red || color == .green ? .black : .init(red: 0.1, green: 0.1, blue: 0.4))
                 .frame(maxWidth: .infinity, minHeight: height)
                 .background(color)
                 .cornerRadius(8)
