@@ -41,6 +41,15 @@ jobs:
               <string>com.tnhdev.SkankPhoneSwift</string>
               <key>CFBundleName</key>
               <string>SkankPhoneSwiftUIRetro</string>
+                            <key>UIViewControllerBasedStatusBarAppearance</key>
+              <true/>
+              <!-- 新增以下權限宣告 -->
+              <key>NSCameraUsageDescription</key>
+              <string>SkankPhone needs camera access to take snapshots.</string>
+              <key>NSPhotoLibraryAddUsageDescription</key>
+              <string>SkankPhone needs photo library access to save snapshots.</string>
+          </dict>
+          </plist>
               <key>CFBundleExecutable</key>
               <string>SkankPhoneSwiftUIRetro</string>
               <key>CFBundleVersion</key>
