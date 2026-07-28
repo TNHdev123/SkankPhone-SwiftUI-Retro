@@ -13,32 +13,26 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Build Swift Package with Xcode
+      # 飛起 xcodebuild，直接用 swift compiler 指定 iOS 系統與 ARM64 架構
+      - name: Build with Swift Compiler
         run: |
-          xcodebuild -package-path . \
-            -scheme SkankPhoneSwiftUIRetro \
-            -destination 'generic/platform=iOS' \
-            -configuration Release \
-            CODE_SIGN_IDENTITY="" \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO \
-            BUILD_DIR=build
+          swift build -c release \
+            -Xswiftc "-sdk" -Xswiftc "$(xcrun --sdk iphoneos --show-sdk-path)" \
+            -Xswiftc "-target" -Xswiftc "arm64-apple-ios15.0"
 
       - name: Package to IPA
         run: |
-          mkdir -p Payload
+          mkdir -p Payload/SkankPhoneSwiftUIRetro.app
           
-          # 自動尋找編譯出的 .app 套件或執行檔
-          APP_DIR=$(find build -name "*.app" -type d | head -n 1)
+          # 尋找編譯出嚟嘅執行檔二進位碼
+          EXEC_FILE=$(find .build -type f -name "SkankPhoneSwiftUIRetro" | head -n 1)
+          echo "成功找到二進位執行檔：$EXEC_FILE"
           
-          if [ -n "$APP_DIR" ]; then
-            cp -R "$APP_DIR" Payload/
-          else
-            mkdir -p Payload/SkankPhoneSwiftUIRetro.app
-            EXEC_FILE=$(find build -name "SkankPhoneSwiftUIRetro" -type f | head -n 1)
-            cp "$EXEC_FILE" Payload/SkankPhoneSwiftUIRetro.app/SkankPhoneSwiftUIRetro
-            
-            cat << 'EOF' > Payload/SkankPhoneSwiftUIRetro.app/Info.plist
+          # 複製執行檔入 .app 資料夾
+          cp "$EXEC_FILE" Payload/SkankPhoneSwiftUIRetro.app/SkankPhoneSwiftUIRetro
+          
+          # 建立 Info.plist 呃過 iOS 系統
+          cat << 'EOF' > Payload/SkankPhoneSwiftUIRetro.app/Info.plist
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0">
@@ -62,8 +56,8 @@ jobs:
           </dict>
           </plist>
           EOF
-          fi
 
+          # 打包成 IPA
           zip -r SkankPhoneSwiftUIRetro.ipa Payload
 
       - name: Upload IPA Artifact
