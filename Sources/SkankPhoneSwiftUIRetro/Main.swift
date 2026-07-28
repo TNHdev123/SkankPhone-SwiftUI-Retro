@@ -7,18 +7,23 @@ struct SkankPhoneApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
-                // 1. 隱藏頂部系統狀態列 (Status Bar)
+                // 1. 隱藏頂部系統狀態列
                 .statusBarHidden(true)
-                // 2. 隱藏底部 Home Bar (iOS 16+ 原生支援)
-                .persistentSystemOverlays(.hidden)
+                // 2. 條件式隱藏 Home Bar (避免 iOS 15 編譯報錯)
+                .hideHomeBarIfPossible()
         }
     }
 }
 
-// 3. 針對 iOS 15 或以下嘅相容處理：強制全域隱藏 Home Bar
-extension UIViewController {
-    open override var prefersHomeIndicatorAutoHidden: Bool {
-        return true
+// 相容 iOS 16+ 嘅 Home Bar 隱藏修飾符
+extension View {
+    @ViewBuilder
+    func hideHomeBarIfPossible() -> some View {
+        if #available(iOS 16.0, *) {
+            self.persistentSystemOverlays(.hidden)
+        } else {
+            self
+        }
     }
 }
 
@@ -107,7 +112,7 @@ struct ContentView: View {
         .onReceive(timer) { input in
             updateTime(date: input)
         }
-        // 介面出現時立即初始化時間
+        // 介面出現時獨立初始化時間
         .onAppear {
             updateTime(date: Date())
         }
@@ -116,7 +121,7 @@ struct ContentView: View {
     // 獨立出一個更新時間嘅 function 方便管理
     private func updateTime(date: Date) {
         let formatter = DateFormatter()
-        formatter.dateFormat = "HH:mm" // 24小時制，符合圖片中嘅 11:40
+        formatter.dateFormat = "HH:mm" // 24小時制
         currentTime = formatter.string(from: date)
     }
 }
