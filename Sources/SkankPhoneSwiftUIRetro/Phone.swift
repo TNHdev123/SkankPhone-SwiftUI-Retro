@@ -12,7 +12,7 @@ struct PhoneView: View {
         VStack(spacing: 0) {
             StatusBarView()
             
-            // 1. 號碼顯示區 (修正：完全無背景顏色，純黑底)
+            // 1. 號碼顯示區 (純黑底、置中)
             Text(dialString.isEmpty ? " " : dialString)
                 .font(.system(size: 34, weight: .regular))
                 .foregroundColor(.white)
@@ -38,7 +38,7 @@ struct PhoneView: View {
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
             
-            // 3. 鍵盤主體 (嚴格 4 行 x 5 列，每行水平對齊)
+            // 3. 上方鍵盤主網格 (3x4 數字鍵 + 兩側功能鍵)
             VStack(spacing: 5) {
                 // 第一行
                 HStack(spacing: 5) {
@@ -73,24 +73,47 @@ struct PhoneView: View {
                     }
                 }
                 
-                // 第四行
+                // 第四行：中間保留 * 0 #，左右透明佔位以維持對齊
                 HStack(spacing: 5) {
-                    actionButton(title: "Send", color: .green) {
-                        triggerCall()
-                    }
+                    Color.clear.frame(maxWidth: .infinity)
                     numButton(letters: "", num: "*")
                     numButton(letters: "", num: "0")
                     numButton(letters: "", num: "#")
-                    actionButton(title: "Menu", color: skankRed) {
-                        currentApp = .main
-                    }
+                    Color.clear.frame(maxWidth: .infinity)
                 }
             }
-            .frame(maxWidth: 420) // 限制最大闊度，避免喺大芒機拉得太散
+            .frame(maxWidth: 420)
             .padding(.horizontal, 6)
             .padding(.top, 4)
             
-            Spacer()
+            Spacer() // 將 Send 同 Menu 推落最底
+            
+            // 4. 底部 Send / Menu 按鈕 (放大、拉長、置底)
+            HStack {
+                // 左下 Send 按鈕
+                Button(action: { triggerCall() }) {
+                    Text("Send")
+                        .font(.system(size: 22, weight: .bold))
+                        .foregroundColor(.black)
+                        .frame(width: 110, height: 75)
+                        .background(Color.green)
+                        .cornerRadius(10)
+                }
+                
+                Spacer()
+                
+                // 右下 Menu 按鈕
+                Button(action: { currentApp = .main }) {
+                    Text("Menu")
+                        .font(.system(size: 22, weight: .bold))
+                        .foregroundColor(.black)
+                        .frame(width: 110, height: 75)
+                        .background(skankRed)
+                        .cornerRadius(10)
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.bottom, 25) // 貼近螢幕底部
         }
         .background(Color.black.ignoresSafeArea())
     }
@@ -107,20 +130,17 @@ struct PhoneView: View {
         }
     }
     
-    // 數字鍵 (英文字母在上、數字在下)
+    // 數字鍵 (高度 62)
     @ViewBuilder
     private func numButton(letters: String, num: String) -> some View {
         Button(action: { dialString.append(num) }) {
             VStack(spacing: -1) {
                 if !letters.isEmpty {
-                    Text(letters)
-                        .font(.system(size: 11, weight: .regular))
+                    Text(letters).font(.system(size: 11, weight: .regular))
                 } else {
-                    Text(" ")
-                        .font(.system(size: 11))
+                    Text(" ").font(.system(size: 11))
                 }
-                Text(num)
-                    .font(.system(size: 24, weight: .bold))
+                Text(num).font(.system(size: 24, weight: .bold))
             }
             .foregroundColor(.black)
             .frame(maxWidth: .infinity)
@@ -130,7 +150,7 @@ struct PhoneView: View {
         }
     }
     
-    // 兩側功能鍵
+    // 兩側一般功能鍵 (高度 62)
     private func actionButton(title: String, color: Color, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(title)
