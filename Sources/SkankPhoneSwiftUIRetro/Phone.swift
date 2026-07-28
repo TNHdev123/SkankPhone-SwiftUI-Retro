@@ -8,18 +8,16 @@ struct PhoneView: View {
         VStack(spacing: 0) {
             StatusBarView()
             
-            // 1. 數字顯示區 (修正：加入行數限制與自動縮小)
+            // 數字顯示區 (改回置中對齊，背景微灰)
             Text(dialString.isEmpty ? " " : dialString)
-                .font(.system(size: 30))
+                .font(.system(size: 34))
                 .foregroundColor(.white)
-                .lineLimit(1) // 限制只有一行
-                .minimumScaleFactor(0.4) // 字串太長時自動縮小字體
-                .truncationMode(.head) // 真係無位時，省略最前面嘅數字
-                .frame(maxWidth: .infinity, alignment: .trailing) // 號碼靠右顯示更自然
-                .frame(height: 50) // 鎖死高度，避免撐開排版
-                .padding(.horizontal, 15)
-                .padding(.vertical, 10)
-                .background(Color(white: 0.0)) // 黑色底
+                .lineLimit(1)
+                .minimumScaleFactor(0.4)
+                .truncationMode(.head)
+                .frame(maxWidth: .infinity, alignment: .center)
+                .frame(height: 60)
+                .background(Color(white: 0.15))
             
             // 頂部小按鈕
             HStack {
@@ -29,62 +27,65 @@ struct PhoneView: View {
                 Spacer()
                 Text("Disconnected")
                     .foregroundColor(.white)
-                    .font(.system(size: 16))
+                    .font(.system(size: 16, weight: .bold))
                 Spacer()
                 topButton(title: "Monitor", color: .green) {}
             }
-            .padding(.horizontal, 5)
+            .padding(.horizontal, 10)
             .padding(.vertical, 10)
             
-            // 2. 鍵盤主體佈局 (修正：改用逐行 HStack 確保完美對齊)
+            // 鍵盤主體佈局
             VStack(spacing: 5) {
                 // 第一行
                 HStack(spacing: 5) {
-                    actionButton(title: "Voice\nmail", color: Color(red: 0.2, green: 0.6, blue: 1.0), width: 70) {}
-                    numButton(num: "1", letters: "")
-                    numButton(num: "2", letters: "ABC")
-                    numButton(num: "3", letters: "DEF")
-                    actionButton(title: "Delete", color: Color(red: 0.2, green: 0.6, blue: 1.0), width: 70) {
+                    actionButton(title: "Voice\nmail", color: Color(red: 0.2, green: 0.6, blue: 1.0)) {}
+                    numButton(letters: "", num: "1")
+                    numButton(letters: "ABC", num: "2")
+                    numButton(letters: "DEF", num: "3")
+                    actionButton(title: "Delete", color: Color(red: 0.2, green: 0.6, blue: 1.0)) {
                         if !dialString.isEmpty { dialString.removeLast() }
                     }
                 }
                 
                 // 第二行
                 HStack(spacing: 5) {
-                    actionButton(title: "Audio\nPrefs", color: .green, width: 70) {}
-                    numButton(num: "4", letters: "GHI")
-                    numButton(num: "5", letters: "JKL")
-                    numButton(num: "6", letters: "MNO")
-                    actionButton(title: "Clear", color: Color(red: 0.2, green: 0.6, blue: 1.0), width: 70) {
+                    actionButton(title: "Audio\nPrefs", color: .green) {}
+                    numButton(letters: "GHI", num: "4")
+                    numButton(letters: "JKL", num: "5")
+                    numButton(letters: "MNO", num: "6")
+                    actionButton(title: "Clear", color: Color(red: 0.2, green: 0.6, blue: 1.0)) {
                         dialString = ""
                     }
                 }
                 
                 // 第三行
                 HStack(spacing: 5) {
-                    actionButton(title: "Call\nPrefs", color: .green, width: 70) {}
-                    numButton(num: "7", letters: "PQRS")
-                    numButton(num: "8", letters: "TUV")
-                    numButton(num: "9", letters: "WXYZ")
-                    actionButton(title: "+/-", color: Color(red: 0.2, green: 0.6, blue: 1.0), width: 70) {
+                    actionButton(title: "Call\nPrefs", color: .green) {}
+                    numButton(letters: "PQRS", num: "7")
+                    numButton(letters: "TUV", num: "8")
+                    numButton(letters: "WXYZ", num: "9")
+                    actionButton(title: "+/,", color: Color(red: 0.2, green: 0.6, blue: 1.0)) {
                         dialString.append("+")
                     }
                 }
                 
                 // 第四行
                 HStack(spacing: 5) {
-                    actionButton(title: "Send", color: .green, width: 70) {
-                        triggerCall() // 修正：觸發系統致電
+                    actionButton(title: "Send", color: .green) {
+                        triggerCall()
                     }
-                    numButton(num: "*", letters: "")
-                    numButton(num: "0", letters: "")
-                    numButton(num: "#", letters: "")
-                    actionButton(title: "Menu", color: .red, width: 70) {
+                    numButton(letters: "", num: "*")
+                    numButton(letters: "", num: "0")
+                    numButton(letters: "", num: "#")
+                    actionButton(title: "Menu", color: .red) {
                         currentApp = .main
                     }
                 }
             }
+            // 限制最大闊度，防止喺大芒機被過度向橫拉伸
+            .frame(maxWidth: 380)
             .padding(.horizontal, 5)
+            .padding(.top, 5)
             
             Spacer()
         }
@@ -93,10 +94,8 @@ struct PhoneView: View {
     
     // --- 輔助 UI 元件與邏輯功能 ---
     
-    // 觸發系統致電功能
     private func triggerCall() {
         guard !dialString.isEmpty else { return }
-        // 必須將 # 等特殊符號編碼為 %23，否則 iOS 無法識別 tel URL
         let encoded = dialString.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? dialString
         if let url = URL(string: "tel://\(encoded)") {
             if UIApplication.shared.canOpenURL(url) {
@@ -105,39 +104,38 @@ struct PhoneView: View {
         }
     }
     
-    // 數字鍵專用按鈕 (包含英文字母)
+    // 數字鍵 (修正：英文字母在上，數字在下)
     @ViewBuilder
-    private func numButton(num: String, letters: String) -> some View {
+    private func numButton(letters: String, num: String) -> some View {
         Button(action: { dialString.append(num) }) {
-            VStack(spacing: -2) { // 微微拉近數字同字母嘅距離
-                Text(num)
-                    .font(.system(size: 26, weight: .bold))
+            VStack(spacing: -2) {
                 if !letters.isEmpty {
                     Text(letters)
-                        .font(.system(size: 10, weight: .bold))
+                        .font(.system(size: 11, weight: .regular))
                 } else {
-                    // 放一個空白字元撐住高度，保證沒有字母的按鍵一樣高
                     Text(" ")
-                        .font(.system(size: 10))
+                        .font(.system(size: 11))
                 }
+                Text(num)
+                    .font(.system(size: 24, weight: .bold))
             }
-            .foregroundColor(.black) // 修正：強制文字為黑色
-            .frame(maxWidth: .infinity, minHeight: 60, maxHeight: 60) // 鎖死高度為 60
+            .foregroundColor(.black)
+            .frame(maxWidth: .infinity, minHeight: 65, maxHeight: 65) // 鎖死高度為 65
             .background(Color(red: 0.2, green: 0.6, blue: 1.0))
-            .cornerRadius(8)
+            .cornerRadius(6) // 圓角收細
         }
     }
     
     // 兩側功能鍵
-    private func actionButton(title: String, color: Color, width: CGFloat, action: @escaping () -> Void) -> some View {
+    private func actionButton(title: String, color: Color, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(title)
                 .multilineTextAlignment(.center)
-                .font(.system(size: 14))
-                .foregroundColor(.black) // 修正：強制文字為黑色
-                .frame(width: width, height: 60) // 鎖死闊度同高度
+                .font(.system(size: 13))
+                .foregroundColor(.black)
+                .frame(maxWidth: .infinity, minHeight: 65, maxHeight: 65)
                 .background(color)
-                .cornerRadius(8)
+                .cornerRadius(6)
         }
     }
     
@@ -145,12 +143,12 @@ struct PhoneView: View {
     private func topButton(title: String, color: Color, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(title)
-                .font(.system(size: 14))
-                .foregroundColor(.black) // 修正：強制文字為黑色
-                .padding(.horizontal, 20)
-                .padding(.vertical, 8)
+                .font(.system(size: 13))
+                .foregroundColor(.black)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 6)
                 .background(color)
-                .cornerRadius(8)
+                .cornerRadius(12) // 保持膠囊形狀
         }
     }
 }
