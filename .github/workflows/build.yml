@@ -38,11 +38,11 @@ jobs:
           <plist version="1.0">
           <dict>
               <key>CFBundleIdentifier</key>
-              <string>com.retro.SkankPhoneSwiftUIRetro</string>
+              <string>com.tnhdev.SkankPhoneSwift</string>
               <key>CFBundleName</key>
-              <string>SkankPhoneSwiftUIRetro</string>
+              <string>SkankPhoneSwift</string>
               <key>CFBundleExecutable</key>
-              <string>SkankPhoneSwiftUIRetro</string>
+              <string>SkankPhoneSwift</string>
               <key>CFBundleVersion</key>
               <string>1</string>
               <key>CFBundleShortVersionString</key>
@@ -53,15 +53,16 @@ jobs:
               </array>
               <key>MinimumOSVersion</key>
               <string>15.0</string>
-          </dict>
-          </plist>
-          EOF
+              <key>UIStatusBarHidden</key>
+              <true/>
+              <key>UIViewControllerBasedStatusBarAppearance</key>
+              <true/>
 
           # 打包成 IPA
-          zip -r SkankPhoneSwiftUIRetro.ipa Payload
+          zip -r SkankPhoneSwift.ipa Payload
 
       - name: Upload IPA Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: SkankPhoneSwiftUIRetro-IPA
-          path: SkankPhoneSwiftUIRetro.ipa
+          name: SkankPhoneSwift-IPA
+          path: SkankPhoneSwift.ipa
