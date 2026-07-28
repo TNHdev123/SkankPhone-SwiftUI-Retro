@@ -13,11 +13,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 飛起 xcodebuild，直接用 swift compiler 指定 iOS 系統與 ARM64 架構
+      # 修正：直接將 --sdk 傳畀 swift build，避免 SPM 退回使用 macOS SDK
       - name: Build with Swift Compiler
         run: |
           swift build -c release \
-            -Xswiftc "-sdk" -Xswiftc "$(xcrun --sdk iphoneos --show-sdk-path)" \
+            --sdk "$(xcrun --sdk iphoneos --show-sdk-path)" \
             -Xswiftc "-target" -Xswiftc "arm64-apple-ios15.0"
 
       - name: Package to IPA
