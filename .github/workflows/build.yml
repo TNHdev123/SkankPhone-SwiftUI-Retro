@@ -48,8 +48,6 @@ jobs:
               <string>SkankPhone needs camera access to take snapshots.</string>
               <key>NSPhotoLibraryAddUsageDescription</key>
               <string>SkankPhone needs photo library access to save snapshots.</string>
-          </dict>
-          </plist>
               <key>CFBundleExecutable</key>
               <string>SkankPhoneSwiftUIRetro</string>
               <key>CFBundleVersion</key>
