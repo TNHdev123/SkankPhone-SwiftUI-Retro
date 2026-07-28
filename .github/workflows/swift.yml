@@ -18,44 +18,20 @@ jobs:
         with:
           xcode-version: latest-stable
 
-      - name: Build Swift Package for iOS
+      - name: Build Swift Package App
         run: |
-          swift build -c release --triple arm64-apple-ios
+          xcodebuild -scheme SkankPhoneSwiftUIRetro \
+            -sdk iphoneos \
+            -configuration Release \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            CONFIGURATION_BUILD_DIR=build
 
       - name: Package to IPA
         run: |
-          mkdir -p Payload/SkankPhoneSwiftUIRetro.app
-          
-          # 將編譯好嘅執行檔複製到 .app 套件中
-          cp .build/arm64-apple-ios/release/SkankPhoneSwiftUIRetro Payload/SkankPhoneSwiftUIRetro.app/SkankPhoneSwiftUIRetro
-          
-          # 建立必要的 Info.plist 讓 iOS 識別
-          cat << 'EOF' > Payload/SkankPhoneSwiftUIRetro.app/Info.plist
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-              <key>CFBundleIdentifier</key>
-              <string>com.retro.SkankPhoneSwiftUIRetro</string>
-              <key>CFBundleName</key>
-              <string>SkankPhoneSwiftUIRetro</string>
-              <key>CFBundleExecutable</key>
-              <string>SkankPhoneSwiftUIRetro</string>
-              <key>CFBundleVersion</key>
-              <string>1</string>
-              <key>CFBundleShortVersionString</key>
-              <string>1.0</string>
-              <key>CFBundleSupportedPlatforms</key>
-              <array>
-                  <string>iPhoneOS</string>
-              </array>
-              <key>MinimumOSVersion</key>
-              <string>15.0</string>
-          </dict>
-          </plist>
-          EOF
-
-          # 壓縮成 IPA
+          mkdir -p Payload
+          mv build/SkankPhoneSwiftUIRetro.app Payload/
           zip -r SkankPhoneSwiftUIRetro.ipa Payload
 
       - name: Upload IPA Artifact
