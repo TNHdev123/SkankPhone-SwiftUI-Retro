@@ -4,7 +4,7 @@ import UIKit
 
 // 全域狀態：用嚟控制目前顯示咩畫面
 enum AppState {
-    case main, phone, camera
+    case main, phone, camera, sms
 }
 
 @main
