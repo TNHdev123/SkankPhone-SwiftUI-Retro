@@ -17,12 +17,10 @@ class BookmarkManager: ObservableObject {
         loadBookmarks()
     }
     
-    // 取得 /Web/Bookmarks.plist 的路徑
     private func getBookmarksURL() -> URL {
         let docURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         let webDir = docURL.appendingPathComponent("Web")
         
-        // 如果 Web 資料夾不存在就建立
         if !FileManager.default.fileExists(atPath: webDir.path) {
             try? FileManager.default.createDirectory(at: webDir, withIntermediateDirectories: true, attributes: nil)
         }
@@ -59,7 +57,6 @@ class WebViewState: ObservableObject {
     @Published var viewHeight: CGFloat = 1
     @Published var scrollY: CGFloat = 0
     
-    // 這個 Closure 用來讓 SwiftUI 觸發 WKWebView 的滑動
     var setScrollOffset: ((CGFloat) -> Void)?
     
     var visibleProportion: CGFloat {
@@ -74,7 +71,27 @@ class WebViewState: ObservableObject {
     }
 }
 
-// --- 3. Web App 主視圖 ---
+// --- 3. 書籤列表滑動狀態 Object (新加入，用於控制清單) ---
+class BookmarkListState: ObservableObject {
+    @Published var contentHeight: CGFloat = 1
+    @Published var viewHeight: CGFloat = 1
+    @Published var scrollY: CGFloat = 0
+    
+    var setScrollOffset: ((CGFloat) -> Void)?
+    
+    var visibleProportion: CGFloat {
+        guard contentHeight > 0 else { return 1 }
+        return min(1, viewHeight / contentHeight)
+    }
+    
+    var scrollProportion: CGFloat {
+        guard contentHeight > viewHeight else { return 0 }
+        let maxScroll = contentHeight - viewHeight
+        return max(0, min(1, scrollY / maxScroll))
+    }
+}
+
+// --- 4. Web App 主視圖 ---
 struct WebView: View {
     @Binding var currentApp: AppState
     
@@ -105,23 +122,21 @@ struct WebView: View {
                         let currentOffset = maxOffset * webViewState.scrollProportion
                         
                         ZStack(alignment: .top) {
-                            Color(white: 0.75) // 灰底
+                            Color(white: 0.75)
                             
-                            skankRed // 紅面
+                            skankRed
                                 .frame(height: thumbHeight)
                                 .offset(y: currentOffset.isNaN ? 0 : currentOffset)
                         }
-                        .contentShape(Rectangle()) // 讓整個軌道都能感應觸控
+                        .contentShape(Rectangle())
                         .gesture(
                             DragGesture(minimumDistance: 0)
                                 .onChanged { value in
                                     guard maxOffset > 0 else { return }
-                                    // 將觸控點置中於紅色滾動條
                                     let dragY = value.location.y - (thumbHeight / 2)
                                     let percentage = min(max(dragY / maxOffset, 0), 1)
                                     let maxScrollY = webViewState.contentHeight - webViewState.viewHeight
                                     
-                                    // 觸發 WKWebView 滑動
                                     webViewState.setScrollOffset?(percentage * maxScrollY)
                                 }
                         )
@@ -131,18 +146,10 @@ struct WebView: View {
                 
                 // 底部 4 個藍色功能按鈕
                 HStack(spacing: 4) {
-                    bottomButton(title: "Back") {
-                        webView.goBack()
-                    }
-                    bottomButton(title: "Reload") {
-                        webView.reload()
-                    }
-                    bottomButton(title: "Bookmarks") {
-                        showBookmarks = true
-                    }
-                    bottomButton(title: "Menu") {
-                        currentApp = .main
-                    }
+                    bottomButton(title: "Back") { webView.goBack() }
+                    bottomButton(title: "Reload") { webView.reload() }
+                    bottomButton(title: "Bookmarks") { showBookmarks = true }
+                    bottomButton(title: "Menu") { currentApp = .main }
                 }
                 .padding(.horizontal, 4)
                 .padding(.top, 4)
@@ -173,23 +180,14 @@ struct WebView: View {
     }
 }
 
-// --- 4. 追蹤 ScrollView 偏移的 PreferenceKey ---
-struct ScrollOffsetKey: PreferenceKey {
-    static var defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value = nextValue()
-    }
-}
-
-// --- 5. 書籤彈出視窗介面 ---
+// --- 5. 書籤彈出視窗介面 (直角 + 白色分界線) ---
 struct BookmarkPopupView: View {
     @Binding var show: Bool
     @ObservedObject var manager: BookmarkManager
     let webView: WKWebView
     
     @State private var selectedID: UUID?
-    @State private var listScrollY: CGFloat = 0
-    @State private var listContentHeight: CGFloat = 0
+    @StateObject private var listState = BookmarkListState()
     
     let skankRed = Color(red: 0.95, green: 0.25, blue: 0.0)
     
@@ -203,16 +201,13 @@ struct BookmarkPopupView: View {
                 .frame(height: 35)
                 .background(Color(white: 0.3))
             
+            Color.white.frame(height: 2) // 白色分界線
+            
             // 列表與右側獨立滾動條
             HStack(spacing: 0) {
-                // 左側：書籤列表
-                ScrollView {
+                // 左側：書籤列表 (使用自訂封裝的 TrackableScrollView)
+                TrackableScrollView(state: listState) {
                     VStack(spacing: 0) {
-                        // 隱藏的探測器，用來獲取 ScrollView 滑動偏移量
-                        GeometryReader { proxy in
-                            Color.clear.preference(key: ScrollOffsetKey.self, value: proxy.frame(in: .named("BookmarkScroll")).minY)
-                        }.frame(height: 0)
-                        
                         ForEach(manager.bookmarks) { bookmark in
                             Text(bookmark.name)
                                 .font(.system(size: 14))
@@ -223,11 +218,9 @@ struct BookmarkPopupView: View {
                                 .background(selectedID == bookmark.id ? skankRed : Color.clear)
                                 .contentShape(Rectangle())
                                 .onTapGesture {
-                                    // 點擊選擇或取消選擇
                                     selectedID = (selectedID == bookmark.id) ? nil : bookmark.id
                                 }
                                 .onLongPressGesture(minimumDuration: 1.0) {
-                                    // 按住 1 秒移除已選項目
                                     if selectedID == bookmark.id {
                                         manager.removeBookmark(bookmark)
                                         selectedID = nil
@@ -235,58 +228,56 @@ struct BookmarkPopupView: View {
                                 }
                         }
                     }
-                    .background(GeometryReader { geo in
-                        Color.clear.onAppear { listContentHeight = geo.size.height }
-                            .onChange(of: geo.size.height) { listContentHeight = $0 }
-                    })
                 }
-                .coordinateSpace(name: "BookmarkScroll")
-                .onPreferenceChange(ScrollOffsetKey.self) { y in
-                    listScrollY = -y // SwiftUI ScrollView 向下滾動 minY 為負數
-                }
-                .background(Color(white: 0.15))
+                .background(Color(white: 0.2)) // 列表底色
                 
-                // 右側：書籤專屬視覺滾動條
+                Color.white.frame(width: 2) // 列表與滾動條之間的白色分界線
+                
+                // 右側：書籤專屬視覺滾動條 (支援拖曳)
                 GeometryReader { geo in
                     let trackHeight = geo.size.height
-                    let visibleProp = min(1, trackHeight / max(1, listContentHeight))
-                    let thumbHeight = max(20, trackHeight * visibleProp)
+                    let thumbHeight = max(20, trackHeight * listState.visibleProportion)
                     let maxOffset = trackHeight - thumbHeight
-                    let maxScroll = max(0.1, listContentHeight - trackHeight)
-                    let currentOffset = maxOffset * min(max(listScrollY / maxScroll, 0), 1)
+                    let currentOffset = maxOffset * listState.scrollProportion
                     
                     ZStack(alignment: .top) {
-                        Color(white: 0.6)
+                        Color(white: 0.75)
                         skankRed
                             .frame(height: thumbHeight)
                             .offset(y: currentOffset.isNaN ? 0 : currentOffset)
                     }
+                    .contentShape(Rectangle())
+                    .gesture(
+                        DragGesture(minimumDistance: 0)
+                            .onChanged { value in
+                                guard maxOffset > 0 else { return }
+                                let dragY = value.location.y - (thumbHeight / 2)
+                                let percentage = min(max(dragY / maxOffset, 0), 1)
+                                let maxScrollY = listState.contentHeight - listState.viewHeight
+                                listState.setScrollOffset?(percentage * maxScrollY)
+                            }
+                    )
                 }
-                .frame(width: 15) // 書籤滾條稍微幼少少
+                .frame(width: 22)
             }
             
-            // 底部按鈕 (Cancel / Add... / Go...)
+            Color.white.frame(height: 2) // 列表與底部按鈕之間的白色分界線
+            
+            // 底部按鈕區塊
             HStack(spacing: 5) {
-                popupButton(title: "Cancel", color: skankRed) {
-                    show = false
-                }
-                popupButton(title: "Add...", color: Color(red: 0.2, green: 0.6, blue: 1.0)) {
-                    addCurrentToBookmarks()
-                }
-                popupButton(title: "Go...", color: Color.green) {
-                    goToSelectedBookmark()
-                }
+                popupButton(title: "Cancel", color: skankRed) { show = false }
+                popupButton(title: "Add...", color: Color(red: 0.2, green: 0.6, blue: 1.0)) { addCurrentToBookmarks() }
+                popupButton(title: "Go...", color: Color.green) { goToSelectedBookmark() }
             }
             .padding(5)
-            .background(Color.white)
+            .background(Color.white) // 按鈕區底色為白
         }
         .frame(width: 280, height: 350)
-        .background(Color.white)
-        .cornerRadius(6)
+        .background(Color.black)
+        .border(Color.white, width: 2) // 外圍直角白色邊框
         .shadow(radius: 10)
     }
     
-    // 加入目前網頁
     private func addCurrentToBookmarks() {
         let title = webView.title?.trimmingCharacters(in: .whitespaces) ?? ""
         let absoluteURL = webView.url?.absoluteString ?? ""
@@ -294,14 +285,11 @@ struct BookmarkPopupView: View {
         
         var nameToSave = title
         if nameToSave.isEmpty {
-            // 利用 Regex 移除 http://, https://, data://, app:// 等前綴
             nameToSave = absoluteURL.replacingOccurrences(of: "^[a-zA-Z]+://", with: "", options: .regularExpression)
         }
-        
         manager.addBookmark(name: nameToSave, url: absoluteURL)
     }
     
-    // 進入已選擇的書籤
     private func goToSelectedBookmark() {
         guard let id = selectedID,
               let selected = manager.bookmarks.first(where: { $0.id == id }),
@@ -320,7 +308,7 @@ struct BookmarkPopupView: View {
                 .frame(maxWidth: .infinity)
                 .frame(height: 35)
                 .background(color)
-                .cornerRadius(6)
+                .cornerRadius(6) // 只有按鈕保留圓角
         }
     }
 }
@@ -340,10 +328,8 @@ struct SkankWebView: UIViewRepresentable {
         webView.scrollView.showsVerticalScrollIndicator = false
         webView.scrollView.showsHorizontalScrollIndicator = false
         
-        // 綁定 KVO 監聽
         context.coordinator.setupKVO(for: webView.scrollView)
         
-        // 讓外部 SwiftUI 可以觸發 WKWebView 的 ScrollView 捲動
         webViewState.setScrollOffset = { [weak webView] yOffset in
             webView?.scrollView.contentOffset.y = yOffset
         }
@@ -375,6 +361,83 @@ struct SkankWebView: UIViewRepresentable {
                 DispatchQueue.main.async {
                     self?.parent.webViewState.contentHeight = view.contentSize.height
                     self?.parent.webViewState.viewHeight = view.bounds.height
+                }
+            }
+        }
+        
+        deinit {
+            offsetObserver?.invalidate()
+            sizeObserver?.invalidate()
+        }
+    }
+}
+
+// --- 7. 用於書籤列表的 UIScrollView 封裝 (支援外部觸發 Offset) ---
+struct TrackableScrollView<Content: View>: UIViewRepresentable {
+    let state: BookmarkListState
+    let content: () -> Content
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self, state: state)
+    }
+    
+    func makeUIView(context: Context) -> UIScrollView {
+        let scrollView = UIScrollView()
+        scrollView.showsVerticalScrollIndicator = false
+        scrollView.showsHorizontalScrollIndicator = false
+        scrollView.backgroundColor = .clear
+        
+        // 將 SwiftUI View 轉換為 UIKit View
+        let host = UIHostingController(rootView: content())
+        host.view.backgroundColor = .clear
+        host.view.translatesAutoresizingMaskIntoConstraints = false
+        scrollView.addSubview(host.view)
+        
+        NSLayoutConstraint.activate([
+            host.view.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor),
+            host.view.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor),
+            host.view.leadingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.leadingAnchor),
+            host.view.trailingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.trailingAnchor),
+            host.view.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor)
+        ])
+        
+        context.coordinator.host = host
+        context.coordinator.setupKVO(for: scrollView)
+        
+        // 提供給外層的閉包，用於透過右側滾動條控制列表
+        state.setScrollOffset = { [weak scrollView] yOffset in
+            scrollView?.contentOffset.y = yOffset
+        }
+        
+        return scrollView
+    }
+    
+    func updateUIView(_ uiView: UIScrollView, context: Context) {
+        context.coordinator.host?.rootView = content()
+    }
+    
+    class Coordinator: NSObject {
+        var parent: TrackableScrollView
+        var state: BookmarkListState
+        var host: UIHostingController<Content>?
+        var offsetObserver: NSKeyValueObservation?
+        var sizeObserver: NSKeyValueObservation?
+        
+        init(_ parent: TrackableScrollView, state: BookmarkListState) {
+            self.parent = parent
+            self.state = state
+        }
+        
+        func setupKVO(for scrollView: UIScrollView) {
+            offsetObserver = scrollView.observe(\.contentOffset, options: .new) { [weak self] view, _ in
+                DispatchQueue.main.async {
+                    self?.state.scrollY = view.contentOffset.y
+                }
+            }
+            sizeObserver = scrollView.observe(\.contentSize, options: .new) { [weak self] view, _ in
+                DispatchQueue.main.async {
+                    self?.state.contentHeight = view.contentSize.height
+                    self?.state.viewHeight = view.bounds.height
                 }
             }
         }
