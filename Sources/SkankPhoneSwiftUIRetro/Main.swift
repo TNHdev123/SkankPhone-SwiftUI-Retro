@@ -107,6 +107,9 @@ struct MainMenuView: View {
                         if label == "Phone" {
                             currentApp = .phone
                         } else {
+                        if label == "SMS" {
+                            currentApp = .sms
+                        } else {
                             print("\(label) tapped")
                         }
                     }) {
