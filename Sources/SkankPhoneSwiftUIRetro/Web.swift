@@ -199,7 +199,7 @@ struct BookmarkPopupView: View {
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
                 .frame(height: 35)
-                .background(Color(white: 0.3))
+                .background(Color.black))
             
             Color.white.frame(height: 2) // 白色分界線
             
@@ -229,7 +229,7 @@ struct BookmarkPopupView: View {
                         }
                     }
                 }
-                .background(Color(white: 0.2)) // 列表底色
+                .background(Color.black)) // 列表底色
                 
                 Color.white.frame(width: 2) // 列表與滾動條之間的白色分界線
                 
@@ -270,7 +270,7 @@ struct BookmarkPopupView: View {
                 popupButton(title: "Go...", color: Color.green) { goToSelectedBookmark() }
             }
             .padding(5)
-            .background(Color.white) // 按鈕區底色為白
+            .background(Color.black) // 按鈕區底色為黑
         }
         .frame(width: 280, height: 350)
         .background(Color.black)
