@@ -107,7 +107,7 @@ struct MainMenuView: View {
                         switch label { 
                         case "Phone":
                             currentApp = .phone
-                        case label == "SMS"
+                        case "SMS"
                             currentApp = .sms
                         default:
                             print("\(label) tapped")
