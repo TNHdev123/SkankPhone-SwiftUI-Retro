@@ -25,7 +25,7 @@ struct SMSView: View {
             
             // 2. 頂部 Camera / Disconnected / Monitor 列
             HStack {
-                topButton(title: "", color: .black) {}
+                topButton(title: "      ", color: .black) {}
                 Spacer()
                 Text("Disconnected")
                     .foregroundColor(.white)
