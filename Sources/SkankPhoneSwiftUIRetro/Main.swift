@@ -4,7 +4,7 @@ import UIKit
 
 // 全域狀態：用嚟控制目前顯示咩畫面
 enum AppState {
-    case main, phone, camera, sms
+    case main, phone, camera, sms, web
 }
 
 @main
@@ -75,6 +75,8 @@ struct RootView: View {
                     CameraView(currentApp: $currentApp)
                 case .sms:
                     SMSView(currentApp: $currentApp)
+                case .web:
+                    WebView(currentApp: $currentApp)
                 }
             }
             .ignoresSafeArea(edges: .top) // <- 全域生效，所有子畫面頂部都會貼緊螢幕最上方
@@ -109,6 +111,8 @@ struct MainMenuView: View {
                             currentApp = .phone
                         case "SMS":
                             currentApp = .sms
+                        case "Web":
+                            currentApp = .web
                         default:
                             print("\(label) tapped")
                         }
