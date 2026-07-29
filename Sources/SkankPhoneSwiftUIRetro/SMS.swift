@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct PhoneView: View {
+struct SMSView: View {
     @Binding var currentApp: AppState
     @State private var dialString = ""
     
