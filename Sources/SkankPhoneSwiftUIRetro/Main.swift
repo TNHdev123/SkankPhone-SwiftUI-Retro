@@ -74,7 +74,7 @@ struct RootView: View {
                 case .camera:
                     CameraView(currentApp: $currentApp)
                 case .sms:
-                    CameraView(currentApp: $currentApp)
+                    SMSView(currentApp: $currentApp)
                 }
             }
             .ignoresSafeArea(edges: .top) // <- 全域生效，所有子畫面頂部都會貼緊螢幕最上方
