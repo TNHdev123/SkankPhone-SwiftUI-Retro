@@ -41,7 +41,7 @@ struct WebView: View {
             // 網頁顯示區域與自訂滾動條 (利用 HStack 左右排列，確保絕對唔會重疊)
             HStack(spacing: 0) {
                 // 左側：網頁主體
-                SkankWebView(webView: webView, url: URL(string: "https://www.youtube.com")!, webViewState: webViewState)
+                SkankWebView(webView: webView, url: URL(string: "https://www.google.com")!, webViewState: webViewState)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(Color.white)
                 
