@@ -104,12 +104,12 @@ struct MainMenuView: View {
             LazyVGrid(columns: columns, spacing: 20) {
                 ForEach(buttonLabels, id: \.self) { label in
                     Button(action: {
-                        if label == "Phone" {
+                        switch label { 
+                        case "Phone":
                             currentApp = .phone
-                        } else {
-                        if label == "SMS" {
+                        case label == "SMS"
                             currentApp = .sms
-                        } else {
+                        default:
                             print("\(label) tapped")
                         }
                     }) {
@@ -133,6 +133,5 @@ struct MainMenuView: View {
             }
             .padding(.bottom, 20)
         }
-        .ignoresSafeArea(edges: .top) // 修正：移除頂部安全區，讓頂部灰色狀態列直接貼緊螢幕最上方
     }
 }
