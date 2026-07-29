@@ -1,10 +1,91 @@
 import SwiftUI
 
+// --- 1. SMS 主選單介面 (還原 image_13.png) ---
 struct SMSView: View {
     @Binding var currentApp: AppState
+    @State private var showSendInterface = false
+    
+    let skankBlue = Color(red: 0.2, green: 0.6, blue: 1.0)
+    let skankRed = Color(red: 0.95, green: 0.25, blue: 0.0)
+    
+    var body: some View {
+        // 如果觸發了發送介面，就顯示 SMSSendView
+        if showSendInterface {
+            SMSSendView(currentApp: $currentApp, showSendInterface: $showSendInterface)
+        } else {
+            VStack(spacing: 0) {
+                StatusBarView()
+                
+                Spacer().frame(height: 20)
+                
+                // 藍色按鈕清單
+                VStack(spacing: 12) {
+                    // 上面五個藍色按鈕：觸發同一個功能（打開發送介面）
+                    ForEach(1...5, id: \.self) { i in
+                        smsMenuButton(title: "SMS Test Message \(i)", color: skankBlue) {
+                            showSendInterface = true
+                        }
+                    }
+                    
+                    // 之後兩個藍色按鈕：觸發同一個功能（打開 sms://）
+                    smsMenuButton(title: "Compose a message", color: skankBlue) {
+                        openSMSApp()
+                    }
+                    smsMenuButton(title: "View Messages", color: skankBlue) {
+                        openSMSApp()
+                    }
+                }
+                .padding(.horizontal, 25)
+                
+                Spacer() // 將紅色按鈕推到最底
+                
+                // 底部 Main Menu 按鈕（比較小且置底）
+                Button(action: {
+                    currentApp = .main
+                }) {
+                    Text("Main Menu")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundColor(.black)
+                        .frame(width: 160, height: 40) // 寬度比藍色按鈕小
+                        .background(skankRed)
+                        .cornerRadius(8)
+                }
+                .padding(.bottom, 40)
+            }
+            .background(Color.black.ignoresSafeArea())
+        }
+    }
+    
+    // 打開系統 SMS 程式
+    private func openSMSApp() {
+        if let url = URL(string: "sms://") {
+            if UIApplication.shared.canOpenURL(url) {
+                UIApplication.shared.open(url)
+            }
+        }
+    }
+    
+    // 藍色按鈕的共用元件
+    private func smsMenuButton(title: String, color: Color, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.system(size: 16, weight: .regular))
+                .foregroundColor(.black)
+                .frame(maxWidth: .infinity)
+                .frame(height: 45) // 扁平的長條按鈕
+                .background(color)
+                .cornerRadius(8)
+        }
+    }
+}
+
+
+// --- 2. SMS 發送介面 (你提供的程式碼，稍微改名避免衝突) ---
+struct SMSSendView: View {
+    @Binding var currentApp: AppState
+    @Binding var showSendInterface: Bool // 用來控制返回上一頁
     @State private var dialString = ""
     
-    // SkankOS 經典藍色與紅色
     let skankBlue = Color(red: 0.2, green: 0.6, blue: 1.0)
     let skankRed = Color(red: 0.95, green: 0.25, blue: 0.0)
     
@@ -36,18 +117,15 @@ struct SMSView: View {
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
             
-            // 3. 鍵盤主體 (修正：改為 5 列直排佈局)
+            // 3. 鍵盤主體
             HStack(alignment: .top, spacing: 5) {
-                
-                // 第一列 (最左邊 3 個按鈕，下移 0.5 格)
                 VStack(spacing: 5) {
                     actionButton(title: "", color: .black) {}
                     actionButton(title: "", color: .black) {}
                     actionButton(title: "Call\nPrefs", color: .green) {}
                 }
-                .padding(.top, 33.5) // (高度62 + 間距5) / 2 = 33.5
+                .padding(.top, 33.5)
                 
-                // 第二列 (數字鍵盤左邊)
                 VStack(spacing: 5) {
                     numButton(letters: "", num: "1")
                     numButton(letters: "GHI", num: "4")
@@ -55,7 +133,6 @@ struct SMSView: View {
                     numButton(letters: "", num: "*")
                 }
                 
-                // 第三列 (數字鍵盤中間)
                 VStack(spacing: 5) {
                     numButton(letters: "ABC", num: "2")
                     numButton(letters: "JKL", num: "5")
@@ -63,7 +140,6 @@ struct SMSView: View {
                     numButton(letters: "", num: "0")
                 }
                 
-                // 第四列 (數字鍵盤右邊)
                 VStack(spacing: 5) {
                     numButton(letters: "DEF", num: "3")
                     numButton(letters: "MNO", num: "6")
@@ -71,7 +147,6 @@ struct SMSView: View {
                     numButton(letters: "", num: "#")
                 }
                 
-                // 第五列 (最右邊 3 個按鈕，下移 0.5 格)
                 VStack(spacing: 5) {
                     actionButton(title: "Delete", color: skankBlue) {
                         if !dialString.isEmpty { dialString.removeLast() }
@@ -84,15 +159,14 @@ struct SMSView: View {
                     }
                 }
                 .padding(.top, 33.5)
-                
             }
             .frame(maxWidth: 420)
             .padding(.horizontal, 6)
             .padding(.top, 4)
             
-            Spacer() // 將 Send 同 Menu 推落最底
+            Spacer()
             
-            // 4. 底部 Send / Menu 按鈕 (放大並置底)
+            // 4. 底部 Send / Menu 按鈕
             HStack {
                 Button(action: { triggerCall() }) {
                     Text("Send")
@@ -105,6 +179,7 @@ struct SMSView: View {
                 
                 Spacer()
                 
+                // 按下 Menu 鍵，回到主畫面 (currentApp = .main)
                 Button(action: { currentApp = .main }) {
                     Text("Menu")
                         .font(.system(size: 22, weight: .bold))
@@ -132,7 +207,6 @@ struct SMSView: View {
         }
     }
     
-    // 數字鍵 (高度 62)
     @ViewBuilder
     private func numButton(letters: String, num: String) -> some View {
         Button(action: { dialString.append(num) }) {
@@ -152,7 +226,6 @@ struct SMSView: View {
         }
     }
     
-    // 兩側一般功能鍵 (高度 62)
     private func actionButton(title: String, color: Color, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(title)
@@ -166,7 +239,6 @@ struct SMSView: View {
         }
     }
     
-    // 頂部 Camera / Monitor 小按鈕
     private func topButton(title: String, color: Color, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(title)
