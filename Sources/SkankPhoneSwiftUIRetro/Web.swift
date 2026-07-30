@@ -160,8 +160,8 @@ struct WebView: View {
             
             // --- 書籤列表彈出視窗 (Popup) ---
             if showBookmarks {
-                .ignoresSafeArea()
-                BookmarkPopupView(show: $showBookmarks, manager: bookmarkManager, webView: webView)
+    Color.black.opacity(0.0).ignoresSafeArea()
+    BookmarkPopupView(show: $showBookmarks, manager: bookmarkManager, webView: webView)
             }
         }
     }
