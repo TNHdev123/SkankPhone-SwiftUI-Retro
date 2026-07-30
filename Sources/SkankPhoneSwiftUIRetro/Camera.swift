@@ -1,5 +1,4 @@
 import SwiftUI
-import Combine
 import AVFoundation
 import UIKit
 
@@ -150,5 +149,6 @@ class CameraModel: NSObject, ObservableObject, AVCapturePhotoCaptureDelegate {
         print("相片已成功儲存至: \(fileURL.path)")
     } catch {
         print("儲存相片失敗: \(error)")
-    }
+     }
+  }
 }
