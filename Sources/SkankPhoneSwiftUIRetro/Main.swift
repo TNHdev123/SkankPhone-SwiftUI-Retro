@@ -115,6 +115,8 @@ struct MainMenuView: View {
                             currentApp = .sms
                         case "Web":
                             currentApp = .web
+                        case "Media":
+                            currentApp = .media
                         default:
                             print("\(label) tapped")
                         }
