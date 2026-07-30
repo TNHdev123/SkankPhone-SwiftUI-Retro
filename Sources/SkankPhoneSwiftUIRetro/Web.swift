@@ -160,7 +160,6 @@ struct WebView: View {
             
             // --- 書籤列表彈出視窗 (Popup) ---
             if showBookmarks {
-                Color.black.opacity(0.4).ignoresSafeArea() // 背景調暗
                 BookmarkPopupView(show: $showBookmarks, manager: bookmarkManager, webView: webView)
             }
         }
