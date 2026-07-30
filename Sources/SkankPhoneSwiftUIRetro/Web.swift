@@ -160,7 +160,10 @@ struct WebView: View {
             
             // --- 書籤列表彈出視窗 (Popup) ---
             if showBookmarks {
-    Color.black.opacity(0.0).ignoresSafeArea()
+    Color.black.opacity(0.0)
+        .ignoresSafeArea()
+        .contentShape(Rectangle()) // 強制將整塊透明區域定義為可點擊實體，徹底阻擋穿透
+    
     BookmarkPopupView(show: $showBookmarks, manager: bookmarkManager, webView: webView)
             }
         }
