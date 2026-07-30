@@ -118,13 +118,36 @@ class CameraModel: NSObject, ObservableObject, AVCapturePhotoCaptureDelegate {
         output.capturePhoto(with: settings, delegate: self)
     }
     
-    // 拍照完成後嘅回調，直接儲存入相簿
+    // 拍照完成後嘅回調，直接儲檔案
     func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
-        guard let data = photo.fileDataRepresentation(), let image = UIImage(data: data) else { return }
-        UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
-        
-        // 模擬快門震動效果
-        let generator = UINotificationFeedbackGenerator()
-        generator.notificationOccurred(.success)
+    // 攞相片嘅 Data
+    guard let data = photo.fileDataRepresentation() else { return }
+    
+    // 1. 取得 Document 目錄路徑
+    guard let documentDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else { return }
+    
+    // 2. 設定目標資料夾路徑 Document/Media/Pictures
+    let mediaPicturesURL = documentDirectory.appendingPathComponent("Media/Pictures")
+    
+    // 3. 檢查資料夾存唔存在，如果唔存在就建立佢
+    if !FileManager.default.fileExists(atPath: mediaPicturesURL.path) {
+        do {
+            try FileManager.default.createDirectory(at: mediaPicturesURL, withIntermediateDirectories: true, attributes: nil)
+        } catch {
+            print("建立資料夾失敗: \(error)")
+            return
+        }
+    }
+    
+    // 4. 設定檔案名稱 (呢度用目前時間戳作為檔名，避免重覆)
+    let fileName = "IMG_\(Int(Date().timeIntervalSince1970)).jpg"
+    let fileURL = mediaPicturesURL.appendingPathComponent(fileName)
+    
+    // 5. 將相片 Data 寫入檔案
+    do {
+        try data.write(to: fileURL)
+        print("相片已成功儲存至: \(fileURL.path)")
+    } catch {
+        print("儲存相片失敗: \(error)")
     }
 }
