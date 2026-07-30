@@ -275,7 +275,6 @@ struct BookmarkPopupView: View {
         .frame(width: 280, height: 350)
         .background(Color.black)
         .border(Color.white, width: 2) // 外圍直角白色邊框
-        .shadow(radius: 10)
     }
     
     private func addCurrentToBookmarks() {
