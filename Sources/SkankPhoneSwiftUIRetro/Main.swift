@@ -78,7 +78,7 @@ struct RootView: View {
                 case .web:
                     WebView(currentApp: $currentApp)
                 case .media:
-                    WebView(currentApp: $currentApp)
+                    MediaView(currentApp: $currentApp)
                 }
             }
             .ignoresSafeArea(edges: .top) // <- 全域生效，所有子畫面頂部都會貼緊螢幕最上方
