@@ -142,7 +142,7 @@ struct PreferenceView: View {
 // --- 3. 密碼 (PIN) 介面 ---
 struct PINView: View {
     @Binding var showPINInterface: Bool
-    @State private var dialString = ""
+    @State private var dialString = "" // 加入 dialString 讓鍵盤有視覺反應
     
     let skankBlue = Color(red: 0.2, green: 0.6, blue: 1.0)
     let skankRed = Color(red: 0.95, green: 0.25, blue: 0.0)
@@ -151,7 +151,7 @@ struct PINView: View {
         VStack(spacing: 0) {
             StatusBarView()
             
-            // 1. 號碼顯示區
+            // 1. 號碼顯示區 (保留原有結構對齊)
             Text(dialString.isEmpty ? " " : dialString)
                 .font(.system(size: 34, weight: .regular))
                 .foregroundColor(.white)
@@ -162,20 +162,21 @@ struct PINView: View {
                 .frame(height: 55)
                 .padding(.top, 10)
             
-            // 2. 頂部 Camera / Disconnected / Monitor 列
+            // 2. 頂部 Disconnected 列
             HStack {
-                topButton(title: "", color: .black) {}
+                topButton(title: "      ", color: .black) {}
                 Spacer()
                 Text("Disconnected")
                     .foregroundColor(.white)
                     .font(.system(size: 16, weight: .bold))
                 Spacer()
-                topButton(title: "", color: .black) {}
+                // 根據截圖，右邊無綠色 Monitor 按鈕，所以用黑色隱藏保持排版
+                topButton(title: "       ", color: .black) {} 
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
             
-            // 3. 鍵盤主體
+            // 3. 鍵盤主體 (完全參考 SMS 結構)
             HStack(alignment: .top, spacing: 5) {
                 VStack(spacing: 5) {
                     actionButton(title: "", color: .black) {}
@@ -224,9 +225,10 @@ struct PINView: View {
             
             Spacer()
             
-            // 4. 底部 Send / Menu 按鈕
+            // 4. 底部 Send pin / Menu 按鈕
             HStack {
-                Button(action: { triggerCall() }) {
+                // 無作用的 Send pin 按鈕
+                Button(action: {}) {
                     Text("Send pin")
                         .font(.system(size: 22, weight: .bold))
                         .foregroundColor(.black)
@@ -237,8 +239,8 @@ struct PINView: View {
                 
                 Spacer()
                 
-                // 按下 Menu 鍵，回到主畫面 (currentApp = .main)
-                Button(action: { currentApp = .main }) {
+                // 按下 Menu 鍵，回到上一頁 (Network主頁)
+                Button(action: { showPINInterface = false }) {
                     Text("Menu")
                         .font(.system(size: 22, weight: .bold))
                         .foregroundColor(.black)
@@ -252,6 +254,54 @@ struct PINView: View {
         }
         .background(Color.black.ignoresSafeArea())
     }
+    
+    // --- 輔助 UI 元件 ---
+    
+    @ViewBuilder
+    private func numButton(letters: String, num: String) -> some View {
+        Button(action: { dialString.append(num) }) {
+            VStack(spacing: -1) {
+                if !letters.isEmpty {
+                    Text(letters).font(.system(size: 11, weight: .regular))
+                } else {
+                    Text(" ").font(.system(size: 11))
+                }
+                Text(num).font(.system(size: 24, weight: .bold))
+            }
+            .foregroundColor(.black)
+            .frame(maxWidth: .infinity)
+            .frame(height: 62)
+            .background(skankBlue)
+            .cornerRadius(8)
+        }
+    }
+    
+    private func actionButton(title: String, color: Color, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .multilineTextAlignment(.center)
+                .font(.system(size: 13, weight: .regular))
+                .foregroundColor(.black)
+                .frame(maxWidth: .infinity)
+                .frame(height: 62)
+                .background(color)
+                .cornerRadius(8)
+        }
+    }
+    
+    private func topButton(title: String, color: Color, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.system(size: 13, weight: .regular))
+                .foregroundColor(.black)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 6)
+                .background(color)
+                .cornerRadius(10)
+        }
+    }
+}
+
     
     // --- 輔助 UI 元件 ---
     
