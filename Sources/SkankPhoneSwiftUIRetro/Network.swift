@@ -122,9 +122,7 @@ struct PreferenceView: View {
             Spacer()
             
             // 底部 Main Menu 按鈕 (藍色)
-            Button(action: {
-                showPreferenceInterface = false // 退回 Network 主頁
-            }) {
+            Button(action: { currentApp = .main }) {
                 Text("Main Menu")
                     .font(.system(size: 16, weight: .bold))
                     .foregroundColor(.black)
@@ -240,7 +238,7 @@ struct PINView: View {
                 Spacer()
                 
                 // 按下 Menu 鍵，回到上一頁 (Network主頁)
-                Button(action: { showPINInterface = false }) {
+                Button(action: { currentApp = .main }) {
                     Text("Menu")
                         .font(.system(size: 22, weight: .bold))
                         .foregroundColor(.black)
