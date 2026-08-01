@@ -165,13 +165,13 @@ struct PINView: View {
             
             // 2. 頂部 Camera / Disconnected / Monitor 列
             HStack {
-                topButton(title: "      ", color: .black) {}
+                topButton(title: "", color: .black) {}
                 Spacer()
                 Text("Disconnected")
                     .foregroundColor(.white)
                     .font(.system(size: 16, weight: .bold))
                 Spacer()
-                topButton(title: "Monitor", color: .green) {}
+                topButton(title: "", color: .black) {}
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
