@@ -14,9 +14,11 @@ struct NetworkView: View {
     
     var body: some View {
         if showPreferenceInterface {
-            PreferenceView(showPreferenceInterface: $showPreferenceInterface)
+            // 【修正】將 $currentApp 傳遞入去
+            PreferenceView(currentApp: $currentApp, showPreferenceInterface: $showPreferenceInterface)
         } else if showPINInterface {
-            PINView(showPINInterface: $showPINInterface)
+            // 【修正】將 $currentApp 傳遞入去
+            PINView(currentApp: $currentApp, showPINInterface: $showPINInterface)
         } else {
             VStack(spacing: 0) {
                 StatusBarView()
@@ -98,6 +100,7 @@ struct NetworkView: View {
 
 // --- 2. Preference 介面 ---
 struct PreferenceView: View {
+    @Binding var currentApp: AppState // 【修正】加入 currentApp Binding
     @Binding var showPreferenceInterface: Bool
     
     var body: some View {
@@ -139,6 +142,7 @@ struct PreferenceView: View {
 
 // --- 3. 密碼 (PIN) 介面 ---
 struct PINView: View {
+    @Binding var currentApp: AppState // 【修正】加入 currentApp Binding
     @Binding var showPINInterface: Bool
     @State private var dialString = "" // 加入 dialString 讓鍵盤有視覺反應
     
@@ -237,7 +241,7 @@ struct PINView: View {
                 
                 Spacer()
                 
-                // 按下 Menu 鍵，回到上一頁 (Network主頁)
+                // 按下 Menu 鍵，回到上一頁 (直接回主畫面)
                 Button(action: { currentApp = .main }) {
                     Text("Menu")
                         .font(.system(size: 22, weight: .bold))
