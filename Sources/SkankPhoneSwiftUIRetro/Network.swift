@@ -27,18 +27,32 @@ struct NetworkView: View {
                 
                 // 中間五個藍色設定按鈕
                 VStack(spacing: 12) {
-                    networkMenuButton(title: "GSM Settings", color: skankBlue) {}
-                    
-                    networkMenuButton(title: "Wifi Settings", color: skankBlue) {
-                        // 打開系統 WiFi 設定
-                        if let url = URL(string: "App-Prefs:root=WIFI") {
-                            if UIApplication.shared.canOpenURL(url) {
-                                UIApplication.shared.open(url)
-                            }
-                        }
-                    }
-                    
-                    networkMenuButton(title: "Bluetooth Settings", color: skankBlue) {}
+                    networkMenuButton(title: "GSM Settings", color: skankBlue) {
+        // 打開系統流動數據設定
+        if let url = URL(string: "App-Prefs:root=MOBILE_DATA_SETTINGS_ID") {
+            if UIApplication.shared.canOpenURL(url) {
+                UIApplication.shared.open(url)
+            }
+        }
+    }
+    
+    networkMenuButton(title: "Wifi Settings", color: skankBlue) {
+        // 打開系統 WiFi 設定
+        if let url = URL(string: "App-Prefs:root=WIFI") {
+            if UIApplication.shared.canOpenURL(url) {
+                UIApplication.shared.open(url)
+            }
+        }
+    }
+    
+    networkMenuButton(title: "Bluetooth Settings", color: skankBlue) {
+        // 打開系統藍牙設定
+        if let url = URL(string: "App-Prefs:root=Bluetooth") {
+            if UIApplication.shared.canOpenURL(url) {
+                UIApplication.shared.open(url)
+            }
+        }
+    }
                     
                     networkMenuButton(title: "Development Settings", color: skankBlue) {}
                     
