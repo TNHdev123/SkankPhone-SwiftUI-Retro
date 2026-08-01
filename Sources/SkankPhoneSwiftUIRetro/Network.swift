@@ -142,7 +142,6 @@ struct PreferenceView: View {
 // --- 3. 密碼 (PIN) 介面 ---
 struct PINView: View {
     @Binding var showPINInterface: Bool
-    @Binding var currentApp: AppState
     @State private var dialString = ""
     
     let skankBlue = Color(red: 0.2, green: 0.6, blue: 1.0)
