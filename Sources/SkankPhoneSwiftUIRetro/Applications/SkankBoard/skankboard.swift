@@ -2,11 +2,6 @@ import SwiftUI
 import Combine
 import UIKit
 
-// 全域狀態：用嚟控制目前顯示咩畫面
-enum AppState {
-    case main, phone, camera, sms, web, media, skankboard
-}
-
 @main
 struct SkankBoardApp: App {
     var body: some Scene {
@@ -67,7 +62,7 @@ struct RootView: View {
             // 用 Group 包住切換邏輯，全域移除頂部安全區
             Group {
                 switch currentApp {
-                case .skankboard:
+                case .main:
                     MainMenuView(currentApp: $currentApp)
                 }
             }
