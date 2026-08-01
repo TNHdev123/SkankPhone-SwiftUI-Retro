@@ -62,7 +62,7 @@ struct RootView: View {
     
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()[span_3](start_span)[span_3](end_span)
+            Color.black.ignoresSafeArea()
             
             // 用 Group 包住切換邏輯，全域移除頂部安全區
             Group {
@@ -74,7 +74,7 @@ struct RootView: View {
                 case .camera:
                     CameraView(currentApp: $currentApp)
                 case .sms:
-                    SMSView(currentApp: $currentApp)
+                    SMSView(currentApp: $currentApp) // ⚠️ 如果你冇 SMSView 嘅檔案，呢度會報錯
                 case .web:
                     WebView(currentApp: $currentApp)
                 case .media:
@@ -94,7 +94,7 @@ struct MainMenuView: View {
     @State private var buttonLabels: [String] = []
     @State private var wallpaper: UIImage? = nil
     
-    let columns = [GridItem(.flexible(), spacing: 20), GridItem(.flexible(), spacing: 20)][span_4](start_span)[span_4](end_span)
+    let columns = [GridItem(.flexible(), spacing: 20), GridItem(.flexible(), spacing: 20)]
 
     var body: some View {
         ZStack {
@@ -111,12 +111,12 @@ struct MainMenuView: View {
             
             // --- UI 互動層 ---
             VStack(spacing: 0) {
-                StatusBarView()[span_5](start_span)[span_5](end_span)
-                Spacer().frame(height: 15)[span_6](start_span)[span_6](end_span)
-                Text("Num: [No Data]").foregroundColor(.white).font(.system(size: 18))[span_7](start_span)[span_7](end_span)
-                Spacer().frame(height: 25)[span_8](start_span)[span_8](end_span)
+                StatusBarView()
+                Spacer().frame(height: 15)
+                Text("Num: [No Data]").foregroundColor(.white).font(.system(size: 18))
+                Spacer().frame(height: 25)
                 
-                LazyVGrid(columns: columns, spacing: 20) {[span_9](start_span)[span_9](end_span)
+                LazyVGrid(columns: columns, spacing: 20) {
                     ForEach(buttonLabels, id: \.self) { label in
                         Button(action: {
                             switch label { 
@@ -142,15 +142,15 @@ struct MainMenuView: View {
                         }
                     }
                 }
-                .padding(.horizontal, 30)[span_10](start_span)[span_10](end_span)
+                .padding(.horizontal, 30)
                 
                 Spacer()
                 
                 VStack(spacing: 5) {
-                    Text("S/N: 5K809BGGWH8").foregroundColor(.white).font(.system(size: 14))[span_11](start_span)[span_11](end_span)
-                    Text("[Skank is the new black] [04.04.05_G]").foregroundColor(.white).font(.system(size: 12))[span_12](start_span)[span_12](end_span)
+                    Text("S/N: 5K809BGGWH8").foregroundColor(.white).font(.system(size: 14))
+                    Text("[Skank is the new black] [04.04.05_G]").foregroundColor(.white).font(.system(size: 12))
                 }
-                .padding(.bottom, 20)[span_13](start_span)[span_13](end_span)
+                .padding(.bottom, 20)
             }
         }
         .onAppear {
@@ -160,15 +160,14 @@ struct MainMenuView: View {
         }
     }
     
-    // --- 讀取或建立 Applications.plist ---
+    // --- 讀取或建立 Applications.plist (轉用 PropertyListEncoder 更安全) ---
     private func loadOrSetupAppList() -> [String] {
-        // 原本的預設排列方式
         let defaultApps = [
             "Phone", "SMS", "Web", "Media",
             "Network\nSettings", "Power\nSettings",
             "More Other", "Playground",
             "Test Tools", "Operator"
-        ][span_14](start_span)[span_14](end_span)
+        ]
         
         guard let documentDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else { return defaultApps }
         let systemDir = documentDirectory.appendingPathComponent("System/SkankPhone")
@@ -176,14 +175,16 @@ struct MainMenuView: View {
         
         if FileManager.default.fileExists(atPath: plistURL.path) {
             // 如果檔案存在，讀取 plist 內容
-            if let savedApps = NSArray(contentsOf: plistURL) as? [String] {
+            if let data = try? Data(contentsOf: plistURL),
+               let savedApps = try? PropertyListDecoder().decode([String].self, from: data) {
                 return savedApps
             }
         } else {
             // 如果冇，就自動製作資料夾同 plist
             do {
                 try FileManager.default.createDirectory(at: systemDir, withIntermediateDirectories: true, attributes: nil)
-                (defaultApps as NSArray).write(to: plistURL, atomically: true)
+                let data = try PropertyListEncoder().encode(defaultApps)
+                try data.write(to: plistURL)
             } catch {
                 print("建立 Applications.plist 失敗: \(error)")
             }
@@ -207,16 +208,15 @@ struct MainMenuView: View {
         }
         
         do {
-            // 參考 Media.plist 的讀取與時間排序邏輯
-            let files = try FileManager.default.contentsOfDirectory(at: wallpaperURL, includingPropertiesForKeys: [.creationDateKey], options: .skipsHiddenFiles)[span_15](start_span)[span_15](end_span)
+            let files = try FileManager.default.contentsOfDirectory(at: wallpaperURL, includingPropertiesForKeys: [.creationDateKey], options: .skipsHiddenFiles)
             
             let sortedFiles = files.filter { url in
-                let ext = url.pathExtension.lowercased()[span_16](start_span)[span_16](end_span)
-                return ext == "jpg" || ext == "jpeg" || ext == "png" || ext == "heic[span_17](start_span)"[span_17](end_span)
+                let ext = url.pathExtension.lowercased()
+                return ext == "jpg" || ext == "jpeg" || ext == "png" || ext == "heic"
             }.sorted { u1, u2 in
-                let date1 = (try? u1.resourceValues(forKeys: [.creationDateKey]))?.creationDate ?? Date.distantPast[span_18](start_span)[span_18](end_span)
-                let date2 = (try? u2.resourceValues(forKeys: [.creationDateKey]))?.creationDate ?? Date.distantPast[span_19](start_span)[span_19](end_span)
-                return date1 > date2[span_20](start_span)[span_20](end_span)
+                let date1 = (try? u1.resourceValues(forKeys: [.creationDateKey]))?.creationDate ?? Date.distantPast
+                let date2 = (try? u2.resourceValues(forKeys: [.creationDateKey]))?.creationDate ?? Date.distantPast
+                return date1 > date2
             }
             
             // 取得最新一張
