@@ -301,39 +301,3 @@ struct PINView: View {
         }
     }
 }
-
-    
-    // --- 輔助 UI 元件 ---
-    
-    @ViewBuilder
-    private func numButton(letters: String, num: String) -> some View {
-        Button(action: {}) { // 暫時留空功能
-            VStack(spacing: -1) {
-                if !letters.isEmpty {
-                    Text(letters).font(.system(size: 11, weight: .regular))
-                } else {
-                    Text(" ").font(.system(size: 11))
-                }
-                Text(num).font(.system(size: 24, weight: .bold))
-            }
-            .foregroundColor(.black)
-            .frame(maxWidth: .infinity)
-            .frame(height: 62)
-            .background(skankBlue)
-            .cornerRadius(8)
-        }
-    }
-    
-    private func actionButton(title: String, color: Color, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Text(title)
-                .multilineTextAlignment(.center)
-                .font(.system(size: 13, weight: .regular))
-                .foregroundColor(.black)
-                .frame(maxWidth: .infinity)
-                .frame(height: 62)
-                .background(color)
-                .cornerRadius(8)
-        }
-    }
-}
