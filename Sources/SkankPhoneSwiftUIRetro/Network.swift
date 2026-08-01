@@ -142,6 +142,8 @@ struct PreferenceView: View {
 // --- 3. 密碼 (PIN) 介面 ---
 struct PINView: View {
     @Binding var showPINInterface: Bool
+    @Binding var currentApp: AppState
+    @State private var dialString = ""
     
     let skankBlue = Color(red: 0.2, green: 0.6, blue: 1.0)
     let skankRed = Color(red: 0.95, green: 0.25, blue: 0.0)
@@ -150,25 +152,39 @@ struct PINView: View {
         VStack(spacing: 0) {
             StatusBarView()
             
-            Spacer().frame(height: 20)
-            
-            // 頂部狀態文字
-            Text("Disconnected")
-                .font(.system(size: 18, weight: .bold))
+            // 1. 號碼顯示區
+            Text(dialString.isEmpty ? " " : dialString)
+                .font(.system(size: 34, weight: .regular))
                 .foregroundColor(.white)
-                .padding(.bottom, 15)
+                .lineLimit(1)
+                .minimumScaleFactor(0.4)
+                .truncationMode(.head)
+                .frame(maxWidth: .infinity, alignment: .center)
+                .frame(height: 55)
+                .padding(.top, 10)
             
-            // 鍵盤主體 (依照截圖分成 5 欄排列)
+            // 2. 頂部 Camera / Disconnected / Monitor 列
+            HStack {
+                topButton(title: "      ", color: .black) {}
+                Spacer()
+                Text("Disconnected")
+                    .foregroundColor(.white)
+                    .font(.system(size: 16, weight: .bold))
+                Spacer()
+                topButton(title: "Monitor", color: .green) {}
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            
+            // 3. 鍵盤主體
             HStack(alignment: .top, spacing: 5) {
-                // 第 1 欄 (左邊綠色按鈕)
                 VStack(spacing: 5) {
-                    Color.clear.frame(height: 62) // 頂部留空兩格對齊
-                    Color.clear.frame(height: 62)
+                    actionButton(title: "", color: .black) {}
+                    actionButton(title: "", color: .black) {}
                     actionButton(title: "Call\nPrefs", color: .green) {}
-                    actionButton(title: "Send pin", color: .green) {} // 無作用按鈕
                 }
+                .padding(.top, 33.5)
                 
-                // 第 2 欄
                 VStack(spacing: 5) {
                     numButton(letters: "", num: "1")
                     numButton(letters: "GHI", num: "4")
@@ -176,7 +192,6 @@ struct PINView: View {
                     numButton(letters: "", num: "*")
                 }
                 
-                // 第 3 欄
                 VStack(spacing: 5) {
                     numButton(letters: "ABC", num: "2")
                     numButton(letters: "JKL", num: "5")
@@ -184,7 +199,6 @@ struct PINView: View {
                     numButton(letters: "", num: "0")
                 }
                 
-                // 第 4 欄
                 VStack(spacing: 5) {
                     numButton(letters: "DEF", num: "3")
                     numButton(letters: "MNO", num: "6")
@@ -192,20 +206,50 @@ struct PINView: View {
                     numButton(letters: "", num: "#")
                 }
                 
-                // 第 5 欄 (右邊藍色與橙色按鈕)
                 VStack(spacing: 5) {
-                    actionButton(title: "Delete", color: skankBlue) {}
-                    actionButton(title: "Clear", color: skankBlue) {}
-                    actionButton(title: "+/,", color: skankBlue) {}
-                    actionButton(title: "Menu", color: skankRed) {
-                        showPINInterface = false // 退回 Network 主頁
+                    actionButton(title: "Delete", color: skankBlue) {
+                        if !dialString.isEmpty { dialString.removeLast() }
+                    }
+                    actionButton(title: "Clear", color: skankBlue) {
+                        dialString = ""
+                    }
+                    actionButton(title: "+/,", color: skankBlue) {
+                        dialString.append("+")
                     }
                 }
+                .padding(.top, 33.5)
             }
             .frame(maxWidth: 420)
             .padding(.horizontal, 6)
+            .padding(.top, 4)
             
             Spacer()
+            
+            // 4. 底部 Send / Menu 按鈕
+            HStack {
+                Button(action: { triggerCall() }) {
+                    Text("Send pin")
+                        .font(.system(size: 22, weight: .bold))
+                        .foregroundColor(.black)
+                        .frame(width: 110, height: 75)
+                        .background(Color.green)
+                        .cornerRadius(10)
+                }
+                
+                Spacer()
+                
+                // 按下 Menu 鍵，回到主畫面 (currentApp = .main)
+                Button(action: { currentApp = .main }) {
+                    Text("Menu")
+                        .font(.system(size: 22, weight: .bold))
+                        .foregroundColor(.black)
+                        .frame(width: 110, height: 75)
+                        .background(skankRed)
+                        .cornerRadius(10)
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.bottom, 25)
         }
         .background(Color.black.ignoresSafeArea())
     }
