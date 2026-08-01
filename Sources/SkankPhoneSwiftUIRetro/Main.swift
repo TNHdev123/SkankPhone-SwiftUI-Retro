@@ -4,7 +4,7 @@ import UIKit
 
 // 全域狀態：用嚟控制目前顯示咩畫面
 enum AppState {
-    case main, phone, camera, sms, web, media, skankboard
+    case main, phone, camera, sms, web, media
 }
 
 @main
@@ -79,8 +79,6 @@ struct RootView: View {
                     WebView(currentApp: $currentApp)
                 case .media:
                     MediaView(currentApp: $currentApp)
-                case .skankboard:
-                    SkankBoardView(currentApp: $currentApp)
                 }
             }
             .ignoresSafeArea(edges: .top) // <- 全域生效，所有子畫面頂部都會貼緊螢幕最上方
@@ -96,7 +94,7 @@ struct MainMenuView: View {
         "Phone", "SMS", "Web", "Media",
         "Network\nSettings", "Power\nSettings",
         "More Other", "Playground",
-        "Test Tools", "Operator", "SkankBoard"
+        "Test Tools", "Operator"
     ]
     let columns = [GridItem(.flexible(), spacing: 20), GridItem(.flexible(), spacing: 20)]
 
@@ -119,8 +117,6 @@ struct MainMenuView: View {
                             currentApp = .web
                         case "Media":
                             currentApp = .media
-                        case "SkankBoard":
-                            currentApp = .skankboard
                         default:
                             print("\(label) tapped")
                         }
