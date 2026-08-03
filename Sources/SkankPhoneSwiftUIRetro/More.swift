@@ -52,7 +52,7 @@ struct MoreOtherView: View {
                         
                         // 5. Quit (退回主畫面，不閃退)
                         moreButton(title: "Quit") {
-                            UIApplication.shared.perform(Selector(("suspend")))
+                            UIApplication.shared.perform(NSSelectorFromString("suspend"))
                         }
                         
                         // 6. Shutdown (全黑且不可互動，按住1秒回主頁)
@@ -159,7 +159,7 @@ struct BrightnessView: View {
     }
 }
 
-// --- 2.1 自訂亮度滑桿元件 ---
+// --- 2.1 自訂亮度滑桿元件 (修正 ViewBuilder 語法與型態轉換) ---
 struct CustomBrightnessSlider: View {
     @Binding var value: CGFloat // 0.0 至 1.0
     let skankBlue = Color(red: 0.2, green: 0.6, blue: 1.0)
@@ -169,7 +169,8 @@ struct CustomBrightnessSlider: View {
             let totalWidth = geometry.size.width
             let thumbX = totalWidth * value
             
-            ZStack(alignment: .leading) {
+            // 加入明確 return 避免 ViewBuilder 編譯錯誤
+            return ZStack(alignment: .leading) {
                 // 灰色底線
                 Rectangle()
                     .fill(Color.gray)
@@ -186,22 +187,18 @@ struct CustomBrightnessSlider: View {
             .gesture(
                 DragGesture(minimumDistance: 0)
                     .onChanged { gesture in
-                        let newValue = min(max(0, gesture.location.x / totalWidth), 1.0)
+                        let newValue = min(max(CGFloat(0), gesture.location.x / totalWidth), CGFloat(1.0))
                         value = newValue
-                        UIScreen.main.brightness = doubleToCGFloat(Double(newValue))
+                        UIScreen.main.brightness = newValue
                     }
             )
         }
         .frame(height: 30)
     }
-    
-    private func doubleToCGFloat(_ val: Double) -> CGFloat {
-        return CGFloat(val)
-    }
 }
 
 
-// --- 3. FT (Field Test) 介面 ---
+// --- 3. FT (Field Test) 介面 (修正 Private API 參數類型) ---
 struct FTView: View {
     @Binding var currentApp: AppState
     @Binding var showFT: Bool
@@ -259,10 +256,12 @@ struct FTView: View {
         let possibleBundleIDs = ["com.apple.FTMInternal", "com.apple.fieldtest"]
         
         if let workspaceClass = NSClassFromString("LSApplicationWorkspace") as? NSObject.Type,
-           let workspace = workspaceClass.perform(NSSelectorFromString("defaultWorkspace"))?.takeUnretainedValue() {
+           let workspace = workspaceClass.perform(NSSelectorFromString("defaultWorkspace"))?.takeUnretainedValue() as? NSObject {
             let selector = NSSelectorFromString("openApplicationWithBundleID:")
             for bundleID in possibleBundleIDs {
-                _ = workspace.perform(selector, with: bundleID)
+                if workspace.responds(to: selector) {
+                    _ = workspace.perform(selector, with: bundleID as NSString)
+                }
             }
         } else if let url = URL(string: "fieldtest://"), UIApplication.shared.canOpenURL(url) {
             UIApplication.shared.open(url)
