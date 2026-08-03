@@ -5,7 +5,6 @@ import UIKit
 struct MoreOtherView: View {
     @Binding var currentApp: AppState
     
-    // 子介面狀態控制
     @State private var showBrightness = false
     @State private var showFT = false
     @State private var showFactory = false
@@ -30,32 +29,23 @@ struct MoreOtherView: View {
                     Spacer().frame(height: 30)
                     
                     VStack(spacing: 12) {
-                        // 1. Brightness
-                        moreButton(title: "Brightness") {
-                            showBrightness = true
-                        }
-                        
-                        // 2. Field Test
-                        moreButton(title: "Field Test") {
-                            showFT = true
-                        }
-                        
-                        // 3. Factory Test
-                        moreButton(title: "Factory Test") {
-                            showFactory = true
-                        }
+                        moreButton(title: "Brightness") { showBrightness = true }
+                        moreButton(title: "Field Test") { showFT = true }
+                        moreButton(title: "Factory Test") { showFactory = true }
                         
                         Spacer().frame(height: 15)
                         
-                        // 4. Terminal (預留)
                         moreButton(title: "Terminal") {}
                         
-                        // 5. Quit (退回主畫面，不閃退)
+                        // Quit (退回主畫面，完美避開 unused result 警告)
                         moreButton(title: "Quit") {
-                            UIApplication.shared.perform(NSSelectorFromString("suspend"))
+                            let suspendSelector = NSSelectorFromString("suspend")
+                            if UIApplication.shared.responds(to: suspendSelector) {
+                                _ = UIApplication.shared.perform(suspendSelector)
+                            }
                         }
                         
-                        // 6. Shutdown (全黑且不可互動，按住1秒回主頁)
+                        // Shutdown
                         moreButton(title: "Shutdown") {
                             isShutdown = true
                         }
@@ -64,7 +54,6 @@ struct MoreOtherView: View {
                     
                     Spacer()
                     
-                    // 7. Main Menu 按鈕 (永遠回到主頁)
                     Button(action: {
                         currentApp = .main
                     }) {
@@ -111,7 +100,6 @@ struct BrightnessView: View {
     @Binding var currentApp: AppState
     @Binding var showBrightness: Bool
     
-    // 綁定當前系統亮度 (0.0 ~ 1.0)
     @State private var brightnessValue: CGFloat = UIScreen.main.brightness
     
     let skankRed = Color(red: 0.95, green: 0.25, blue: 0.0)
@@ -128,7 +116,7 @@ struct BrightnessView: View {
                     .foregroundColor(.white)
                 
                 HStack(spacing: 12) {
-                    // 自訂滑桿：灰色底線 + 藍色直條拉桿
+                    // 自訂滑桿
                     CustomBrightnessSlider(value: $brightnessValue)
                     
                     // 顯示 0 - 100 數值
@@ -142,7 +130,6 @@ struct BrightnessView: View {
             
             Spacer()
             
-            // 底部 Main Menu 按鈕 (回到主頁)
             Button(action: {
                 currentApp = .main
             }) {
@@ -159,35 +146,31 @@ struct BrightnessView: View {
     }
 }
 
-// --- 2.1 自訂亮度滑桿元件 (修正 ViewBuilder 語法與型態轉換) ---
+// --- 2.1 自訂亮度滑桿元件 (完全移除了 ViewBuilder 內的變數宣告，保證能編譯) ---
 struct CustomBrightnessSlider: View {
     @Binding var value: CGFloat // 0.0 至 1.0
     let skankBlue = Color(red: 0.2, green: 0.6, blue: 1.0)
     
     var body: some View {
         GeometryReader { geometry in
-            let totalWidth = geometry.size.width
-            let thumbX = totalWidth * value
-            
-            // 加入明確 return 避免 ViewBuilder 編譯錯誤
-            return ZStack(alignment: .leading) {
+            ZStack(alignment: .leading) {
                 // 灰色底線
                 Rectangle()
                     .fill(Color.gray)
                     .frame(height: 2)
                 
-                // 藍色直條拉桿
+                // 藍色直條拉桿 (利用 geometry.size 直接運算，避免宣告 let)
                 Rectangle()
                     .fill(skankBlue)
                     .frame(width: 4, height: 26)
-                    .offset(x: max(0, min(thumbX - 2, totalWidth - 4)))
+                    .offset(x: max(0, min((geometry.size.width * value) - 2, geometry.size.width - 4)))
             }
             .frame(maxHeight: .infinity)
             .contentShape(Rectangle())
             .gesture(
                 DragGesture(minimumDistance: 0)
                     .onChanged { gesture in
-                        let newValue = min(max(CGFloat(0), gesture.location.x / totalWidth), CGFloat(1.0))
+                        let newValue = min(max(CGFloat(0), gesture.location.x / geometry.size.width), CGFloat(1.0))
                         value = newValue
                         UIScreen.main.brightness = newValue
                     }
@@ -198,7 +181,7 @@ struct CustomBrightnessSlider: View {
 }
 
 
-// --- 3. FT (Field Test) 介面 (修正 Private API 參數類型) ---
+// --- 3. FT (Field Test) 介面 ---
 struct FTView: View {
     @Binding var currentApp: AppState
     @Binding var showFT: Bool
@@ -221,7 +204,6 @@ struct FTView: View {
             
             Spacer()
             
-            // 底部 Main Menu 按鈕 (回到主頁)
             Button(action: {
                 currentApp = .main
             }) {
@@ -251,19 +233,28 @@ struct FTView: View {
         }
     }
     
-    // 透過 Bundle ID 打開 FTMInternal-4.app / FieldTest
+    // 透過 Bundle ID 打開 FTMInternal-4.app (最嚴格安全嘅 Private API 寫法)
     private func openFTMApp() {
         let possibleBundleIDs = ["com.apple.FTMInternal", "com.apple.fieldtest"]
         
-        if let workspaceClass = NSClassFromString("LSApplicationWorkspace") as? NSObject.Type,
-           let workspace = workspaceClass.perform(NSSelectorFromString("defaultWorkspace"))?.takeUnretainedValue() as? NSObject {
-            let selector = NSSelectorFromString("openApplicationWithBundleID:")
-            for bundleID in possibleBundleIDs {
-                if workspace.responds(to: selector) {
-                    _ = workspace.perform(selector, with: bundleID as NSString)
+        if let workspaceClass = NSClassFromString("LSApplicationWorkspace") as? NSObject.Type {
+            let defaultWorkspaceSelector = NSSelectorFromString("defaultWorkspace")
+            
+            if workspaceClass.responds(to: defaultWorkspaceSelector),
+               let workspace = workspaceClass.perform(defaultWorkspaceSelector)?.takeUnretainedValue() as? NSObject {
+                
+                let openSelector = NSSelectorFromString("openApplicationWithBundleID:")
+                if workspace.responds(to: openSelector) {
+                    for bundleID in possibleBundleIDs {
+                        _ = workspace.perform(openSelector, with: bundleID)
+                    }
+                    return // 成功觸發就退出
                 }
             }
-        } else if let url = URL(string: "fieldtest://"), UIApplication.shared.canOpenURL(url) {
+        }
+        
+        // 備用方案
+        if let url = URL(string: "fieldtest://"), UIApplication.shared.canOpenURL(url) {
             UIApplication.shared.open(url)
         }
     }
@@ -277,20 +268,19 @@ struct FactoryTestView: View {
     
     let skankBlue = Color(red: 0.2, green: 0.6, blue: 1.0)
     let skankRed = Color(red: 0.95, green: 0.25, blue: 0.0)
-    let skankDarkBlue = Color(red: 0.1, green: 0.25, blue: 0.6) // 暗沉藍色
+    let skankDarkBlue = Color(red: 0.1, green: 0.25, blue: 0.6)
     
     var body: some View {
         VStack(spacing: 0) {
             StatusBarView()
             
-            // 所有按鈕靠底
+            // 將按鈕推落去靠底
             Spacer()
             
             VStack(spacing: 12) {
-                // 1. Start Burn-In
                 factoryButton(title: "Start Burn-In", color: skankBlue) {}
                 
-                // 2. Restart Cycling (暗色，無法點擊)
+                // Restart Cycling (暗色，無法點擊)
                 Button(action: {}) {
                     Text("Restart Cycling")
                         .font(.system(size: 16, weight: .regular))
@@ -302,13 +292,10 @@ struct FactoryTestView: View {
                 }
                 .disabled(true)
                 
-                // 3. Battery Discharge
                 factoryButton(title: "Battery Discharge", color: skankBlue) {}
-                
-                // 4. Reset Tests
                 factoryButton(title: "Reset Tests", color: skankBlue) {}
                 
-                // 5. Exit 按鈕 (紅色置底，回到主頁)
+                // Exit 按鈕 (紅色，回到主頁)
                 Button(action: {
                     currentApp = .main
                 }) {
