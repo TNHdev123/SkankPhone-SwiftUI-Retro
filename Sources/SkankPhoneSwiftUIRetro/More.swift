@@ -1,8 +1,8 @@
 import SwiftUI
 import UIKit
 
-// --- 1. MoreOther 主選單介面 ---
-struct MoreOtherView: View {
+// --- 1. More 主選單介面 ---
+struct MoreView: View {
     @Binding var currentApp: AppState
     
     @State private var showBrightness = false
@@ -146,7 +146,7 @@ struct BrightnessView: View {
     }
 }
 
-// --- 2.1 自訂亮度滑桿元件 (完全移除了 ViewBuilder 內的變數宣告，保證能編譯) ---
+// --- 2.1 自訂亮度滑桿元件 ---
 struct CustomBrightnessSlider: View {
     @Binding var value: CGFloat // 0.0 至 1.0
     let skankBlue = Color(red: 0.2, green: 0.6, blue: 1.0)
@@ -159,7 +159,7 @@ struct CustomBrightnessSlider: View {
                     .fill(Color.gray)
                     .frame(height: 2)
                 
-                // 藍色直條拉桿 (利用 geometry.size 直接運算，避免宣告 let)
+                // 藍色直條拉桿
                 Rectangle()
                     .fill(skankBlue)
                     .frame(width: 4, height: 26)
@@ -233,7 +233,7 @@ struct FTView: View {
         }
     }
     
-    // 透過 Bundle ID 打開 FTMInternal-4.app (最嚴格安全嘅 Private API 寫法)
+    // 透過 Bundle ID 打開 FTMInternal-4.app 
     private func openFTMApp() {
         let possibleBundleIDs = ["com.apple.FTMInternal", "com.apple.fieldtest"]
         
