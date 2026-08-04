@@ -1,6 +1,7 @@
 import SwiftUI
 import CoreMotion
 import AVFoundation
+import UIKit
 
 // --- 1. Playground 主選單介面 ---
 struct PlaygroundView: View {
@@ -80,7 +81,7 @@ struct AccelerometerView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            // 頂部數值列 (取代狀態列)
+            // 頂部座標顯示欄 (無系統狀態列)
             HStack {
                 Text(String(format: "x: %.2f", motion.x))
                     .foregroundColor(Color.green.opacity(0.8))
@@ -91,7 +92,7 @@ struct AccelerometerView: View {
                 Text(String(format: "z: %.2f", motion.z))
                     .foregroundColor(.white)
                 Spacer()
-                Text("6:14") // 模擬截圖中嘅時間
+                Text("6:14")
                     .foregroundColor(.white)
                 Image(systemName: "play.fill")
                     .foregroundColor(.white)
@@ -99,7 +100,7 @@ struct AccelerometerView: View {
             }
             .font(.system(size: 14, weight: .bold))
             .padding(.horizontal, 10)
-            .padding(.top, 40) // 預留安全區
+            .padding(.top, 40)
             .padding(.bottom, 5)
             .background(Color.gray.opacity(0.4))
             
@@ -123,11 +124,11 @@ struct AccelerometerView: View {
             ZStack {
                 Rectangle()
                     .stroke(skankBlue, lineWidth: 4)
-                    .frame(width: 300, height: 300)
+                    .frame(width: 280, height: 280)
                 
                 Circle()
                     .fill(skankRed)
-                    .frame(width: 30, height: 30)
+                    .frame(width: 26, height: 26)
                     .offset(x: motion.dotX, y: motion.dotY)
             }
             
@@ -159,25 +160,24 @@ class MotionManager: ObservableObject {
     @Published var y: Double = 0.0
     @Published var z: Double = 0.0
     
-    // 紅點位移
     @Published var dotX: CGFloat = 0.0
     @Published var dotY: CGFloat = 0.0
     
     func start() {
         if manager.isAccelerometerAvailable {
             manager.accelerometerUpdateInterval = 1.0 / 60.0
-            manager.startAccelerometerUpdates(to: .main) { [weak self] data, _ in
+            manager.startAccelerometerUpdates(to: OperationQueue.main) { [weak self] data, _ in
                 guard let self = self, let data = data else { return }
                 self.x = data.acceleration.x
                 self.y = data.acceleration.y
                 self.z = data.acceleration.z
                 
-                // 根據加速度更新位置，135係框邊界 (300/2 - 30/2)
-                let newX = self.dotX + CGFloat(data.acceleration.x * 15)
-                let newY = self.dotY - CGFloat(data.acceleration.y * 15) // y軸反轉以符合現實傾斜
+                // 裝置上方斜落去，球會滑向上方
+                let newX = self.dotX + CGFloat(data.acceleration.x * 12)
+                let newY = self.dotY - CGFloat(data.acceleration.y * 12)
                 
-                self.dotX = max(min(newX, 135), -135)
-                self.dotY = max(min(newY, 135), -135)
+                self.dotX = max(min(newX, 125), -125)
+                self.dotY = max(min(newY, 125), -125)
             }
         }
     }
@@ -274,7 +274,7 @@ class CameraModel: NSObject, ObservableObject, AVCapturePhotoCaptureDelegate {
     }
     
     private func setup() {
-        DispatchQueue.global(qos: .background).async {
+        DispatchQueue.global(qos: .userInitiated).async {
             guard let device = AVCaptureDevice.default(for: .video),
                   let input = try? AVCaptureDeviceInput(device: device) else { return }
             
@@ -287,7 +287,9 @@ class CameraModel: NSObject, ObservableObject, AVCapturePhotoCaptureDelegate {
     }
     
     func stop() {
-        session.stopRunning()
+        DispatchQueue.global(qos: .userInitiated).async {
+            self.session.stopRunning()
+        }
     }
     
     func capture() {
@@ -304,28 +306,28 @@ class CameraModel: NSObject, ObservableObject, AVCapturePhotoCaptureDelegate {
     }
 }
 
-// 將 AVFoundation 的畫面橋接入 SwiftUI
+// 自訂 UIKit 視圖類別，保證 PreviewLayer 尺寸完美適應
+class UIKitCameraPreview: UIView {
+    override class var layerClass: AnyClass {
+        return AVCaptureVideoPreviewLayer.self
+    }
+    
+    var videoPreviewLayer: AVCaptureVideoPreviewLayer {
+        return layer as! AVCaptureVideoPreviewLayer
+    }
+}
+
 struct CameraPreview: UIViewRepresentable {
     @ObservedObject var camera: CameraModel
     
-    func makeUIView(context: Context) -> UIView {
-        let view = UIView(frame: UIScreen.main.bounds)
-        let previewLayer = AVCaptureVideoPreviewLayer(session: camera.session)
-        previewLayer.videoGravity = .resizeAspectFill
-        view.layer.addSublayer(previewLayer)
-        
-        // 確保 Layer 大小跟隨 View
-        DispatchQueue.main.async {
-            previewLayer.frame = view.bounds
-        }
+    func makeUIView(context: Context) -> UIKitCameraPreview {
+        let view = UIKitCameraPreview()
+        view.videoPreviewLayer.session = camera.session
+        view.videoPreviewLayer.videoGravity = .resizeAspectFill
         return view
     }
     
-    func updateUIView(_ uiView: UIView, context: Context) {
-        if let layer = uiView.layer.sublayers?.first as? AVCaptureVideoPreviewLayer {
-            layer.frame = uiView.bounds
-        }
-    }
+    func updateUIView(_ uiView: UIKitCameraPreview, context: Context) {}
 }
 
 
@@ -339,69 +341,65 @@ struct MissionControlView: View {
             ZStack {
                 Color.black.ignoresSafeArea()
                 
-                // 橫向排版主體
                 HStack(spacing: 0) {
-                    // 左側：控制面板圖案 + 方向鍵
+                    // 左側：控制面板圖樣
                     ZStack {
-                        // 模擬截圖中嘅圖案 (用圓圈與文字代替畫圖)
                         VStack(spacing: 10) {
                             ZStack {
-                                Circle().stroke(Color.white, lineWidth: 2).frame(width: 60)
-                                Circle().stroke(Color.white, lineWidth: 1).frame(width: 40)
+                                Circle().stroke(Color.white, lineWidth: 2).frame(width: 50)
+                                Circle().stroke(Color.white, lineWidth: 1).frame(width: 30)
                                 Image(systemName: "play.fill").foregroundColor(.white).rotationEffect(.degrees(-90))
                             }
-                            Circle().stroke(Color.white, lineWidth: 1).frame(width: 40)
+                            Circle().stroke(Color.white, lineWidth: 1).frame(width: 30)
                                 .overlay(Text("Option").font(.system(size: 8)).foregroundColor(.white))
                         }
-                        .position(x: 80, y: 100)
+                        .position(x: 60, y: 80)
                         
-                        // 四個方向鍵
-                        VStack(spacing: 40) {
-                            Image(systemName: "triangle.fill").foregroundColor(.gray) // 上
-                            HStack(spacing: 80) {
-                                Image(systemName: "triangle.fill").foregroundColor(.gray).rotationEffect(.degrees(-90)) // 左
-                                Image(systemName: "triangle.fill").foregroundColor(.gray).rotationEffect(.degrees(90))  // 右
+                        // 方向鍵
+                        VStack(spacing: 30) {
+                            Image(systemName: "triangle.fill").foregroundColor(.gray)
+                            HStack(spacing: 60) {
+                                Image(systemName: "triangle.fill").foregroundColor(.gray).rotationEffect(.degrees(-90))
+                                Image(systemName: "triangle.fill").foregroundColor(.gray).rotationEffect(.degrees(90))
                             }
-                            Image(systemName: "triangle.fill").foregroundColor(.gray).rotationEffect(.degrees(180)) // 下
+                            Image(systemName: "triangle.fill").foregroundColor(.gray).rotationEffect(.degrees(180))
                         }
-                        .position(x: 200, y: geo.size.height / 2)
+                        .position(x: 180, y: geo.size.width / 2)
                     }
                     .frame(maxWidth: .infinity)
                     
-                    // 右側：連線表單
+                    // 右側：連線表單與 Quit 按鈕
                     VStack(spacing: 0) {
                         Text("192.168.1.7")
-                            .font(.system(size: 14))
+                            .font(.system(size: 13))
                             .foregroundColor(.black)
-                            .frame(width: 120, height: 35)
+                            .frame(width: 110, height: 32)
                             .background(Color.white)
                         
                         Button(action: {}) {
                             Text("Connect")
-                                .font(.system(size: 14, weight: .bold))
+                                .font(.system(size: 13, weight: .bold))
                                 .foregroundColor(.white)
-                                .frame(width: 120, height: 35)
+                                .frame(width: 110, height: 32)
                                 .background(skankBlue)
                         }
                         
-                        // Quit 按鈕 (直接返回主頁)
                         Button(action: {
                             currentApp = .main
                         }) {
                             Text("Quit")
-                                .font(.system(size: 14, weight: .bold))
+                                .font(.system(size: 13, weight: .bold))
                                 .foregroundColor(.white)
-                                .frame(width: 120, height: 35)
+                                .frame(width: 110, height: 32)
                                 .background(skankBlue)
                         }
                     }
                     .border(Color.white, width: 2)
-                    .padding(.trailing, 40)
+                    .padding(.trailing, 30)
                 }
             }
-            // 利用旋轉來製造橫向介面效果
             .frame(width: geo.size.height, height: geo.size.width)
-            .rotationEffect(.degrees(90))
+            .rotationEffect(.degrees(-90))
             .position(x: geo.size.width / 2, y: geo.size.height / 2)
         }
         .background(Color.black.ignoresSafeArea())
