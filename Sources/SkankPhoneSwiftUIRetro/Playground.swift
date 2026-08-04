@@ -196,7 +196,7 @@ class MotionManager: ObservableObject {
 // --- 3. Tile Game (相機) 介面 ---
 struct TileGameView: View {
     @Binding var currentApp: AppState
-    @StateObject private var camera = CameraModel()
+    @StateObject private var camera = TileGameCameraModel() // 已改名
     
     let skankBlue = Color(red: 0.2, green: 0.6, blue: 1.0)
     
@@ -206,7 +206,7 @@ struct TileGameView: View {
             
             VStack(spacing: 0) {
                 // 上半部：相機畫面
-                CameraPreview(camera: camera)
+                TileGameCameraPreview(camera: camera) // 已改名
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .clipped()
                 
@@ -259,8 +259,8 @@ struct TileGameView: View {
     }
 }
 
-// 相機控制邏輯
-class CameraModel: NSObject, ObservableObject, AVCapturePhotoCaptureDelegate {
+// 相機控制邏輯 (已改名避免衝突)
+class TileGameCameraModel: NSObject, ObservableObject, AVCapturePhotoCaptureDelegate {
     @Published var session = AVCaptureSession()
     @Published var capturedImage: UIImage?
     private let output = AVCapturePhotoOutput()
@@ -306,8 +306,8 @@ class CameraModel: NSObject, ObservableObject, AVCapturePhotoCaptureDelegate {
     }
 }
 
-// 自訂 UIKit 視圖類別，保證 PreviewLayer 尺寸完美適應
-class UIKitCameraPreview: UIView {
+// 自訂 UIKit 視圖類別 (已改名避免衝突)
+class TileGameUIKitCameraPreview: UIView {
     override class var layerClass: AnyClass {
         return AVCaptureVideoPreviewLayer.self
     }
@@ -317,18 +317,20 @@ class UIKitCameraPreview: UIView {
     }
 }
 
-struct CameraPreview: UIViewRepresentable {
-    @ObservedObject var camera: CameraModel
+// (已改名避免衝突)
+struct TileGameCameraPreview: UIViewRepresentable {
+    @ObservedObject var camera: TileGameCameraModel
     
-    func makeUIView(context: Context) -> UIKitCameraPreview {
-        let view = UIKitCameraPreview()
+    func makeUIView(context: Context) -> TileGameUIKitCameraPreview {
+        let view = TileGameUIKitCameraPreview()
         view.videoPreviewLayer.session = camera.session
         view.videoPreviewLayer.videoGravity = .resizeAspectFill
         return view
     }
     
-    func updateUIView(_ uiView: UIKitCameraPreview, context: Context) {}
+    func updateUIView(_ uiView: TileGameUIKitCameraPreview, context: Context) {}
 }
+
 
 
 // --- 4. Mission: Control 橫向介面 ---
