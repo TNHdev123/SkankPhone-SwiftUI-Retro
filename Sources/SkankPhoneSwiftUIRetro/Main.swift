@@ -4,7 +4,7 @@ import UIKit
 
 // 全域狀態：用嚟控制目前顯示咩畫面
 enum AppState {
-    case main, phone, camera, sms, web, media, network, power, more
+    case main, phone, camera, sms, web, media, network, power, more, playground
 }
 
 @main
@@ -85,6 +85,8 @@ struct RootView: View {
                     PowerView(currentApp: $currentApp)
                 case .more:
                     MoreView(currentApp: $currentApp)
+                case .playground:
+                    PlaygroundView(currentApp: $currentApp)
                 }
             }
             .ignoresSafeArea(edges: .top)
@@ -140,6 +142,8 @@ struct MainMenuView: View {
                                 currentApp = .power
                             case "More Other":
                                 currentApp = .more
+                            case "Playground":
+                                currentApp = .playground
                             default:
                                 print("\(label) tapped")
                             }
