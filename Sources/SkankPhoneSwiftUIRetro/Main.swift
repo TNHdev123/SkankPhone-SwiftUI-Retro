@@ -4,7 +4,7 @@ import UIKit
 
 // 全域狀態：用嚟控制目前顯示咩畫面
 enum AppState {
-    case main, phone, camera, sms, web, media, network, power, more, playground
+    case main, phone, camera, sms, web, media, network, power, more, terminal, playground
 }
 
 @main
@@ -85,6 +85,8 @@ struct RootView: View {
                     PowerView(currentApp: $currentApp)
                 case .more:
                     MoreView(currentApp: $currentApp)
+                case .terminal:
+                    TerminalView(currentApp: $currentApp)
                 case .playground:
                     PlaygroundView(currentApp: $currentApp)
                 }
