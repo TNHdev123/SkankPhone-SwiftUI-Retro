@@ -3,111 +3,67 @@ import SwiftUI
 struct TerminalView: View {
     @Binding var currentApp: AppState
     
-    // 根據截圖定義嘅顏色
-    let skankBlue = Color(red: 0.2, green: 0.6, blue: 1.0)
-    let statusBarBg = Color(red: 0.55, green: 0.65, blue: 0.75) // 頂部狀態列專屬灰藍色
-    
-    // 模擬截圖中嘅綠色終端機文字
-    let mockOutput = """
+    // 模擬截圖中嘅終端機文字
+    let terminalText = """
     iperf Done
-    kill: usage: kill [-s..or kill -l [sigspec]]
-    No command in /usr/loc...c/subtests/custom.t
-    No command in /usr/loc...c/subtests/custom.t
-    No command in /usr/loc...c/subtests/custom.t
+    kill: usage: kill [-s..or kill -l [sigspec]
+    No command in /usr/loc_c/subtests/custom.t
+    No command in /usr/loc_c/subtests/custom.t
+    No command in /usr/loc_c/subtests/custom.t
     """
     
+    let skankBlue = Color(red: 0.2, green: 0.6, blue: 1.0)
+    
     var body: some View {
+        // 嚴格跟隨新 App 嘅標準排版結構
         VStack(spacing: 0) {
+            // 1. 必須呼叫共用嘅狀態列
+            StatusBarView()
             
-            // --- 頂部自訂狀態列 ---
-            HStack {
-                // 左側綠色假訊號線
-                Path { path in
-                    path.move(to: CGPoint(x: 0, y: 15))
-                    path.addLine(to: CGPoint(x: 5, y: 5))
-                    path.addLine(to: CGPoint(x: 10, y: 10))
-                    path.addLine(to: CGPoint(x: 15, y: 0))
-                }
-                .stroke(Color.green, lineWidth: 2)
-                .frame(width: 20, height: 15)
-                .padding(.leading, 10)
-                
-                Spacer()
-                
-                // 右側時間
-                Text("6:23")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(.white)
-                    .padding(.trailing, 10)
-            }
-            .frame(height: 35)
-            .background(statusBarBg)
-            .padding(.top, 40) // 預留頂部安全區
-            .background(statusBarBg.ignoresSafeArea(edges: .top))
-            
-            
-            // --- 中間終端機畫面 + 假捲動軸 ---
+            // 2. 終端機內容區域
             HStack(spacing: 0) {
-                // 左邊黑底綠字區域
-                VStack(alignment: .leading) {
-                    Text(mockOutput)
-                        .font(.system(size: 11, design: .monospaced))
-                        .foregroundColor(.green)
-                        .lineSpacing(2)
-                        .padding(4)
-                    
-                    Spacer()
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.black)
+                // 左側綠色代碼文字
+                Text(terminalText)
+                    .font(.system(size: 12, design: .monospaced))
+                    .foregroundColor(.green)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                    .padding(4)
+                    .background(Color.black)
                 
-                // 右邊完全灰色且不能滑動的假捲動軸
+                // 右側假滑桿 (完全灰色，不能滑動)
                 Rectangle()
-                    .fill(Color(white: 0.75))
-                    .frame(width: 25)
+                    .fill(Color(red: 0.8, green: 0.8, blue: 0.8))
+                    .frame(width: 20)
+                    .frame(maxHeight: .infinity)
             }
             
-            // --- 底部按鈕列 ---
-            HStack(spacing: 8) {
-                terminalButton(title: "Clear")
-                terminalButton(title: "Reload")
-                terminalButton(title: "Pick")
-                
-                // Main Menu 按鈕，用作退出返回主頁
-                Button(action: {
-                    currentApp = .main
-                }) {
-                    Text("Main Menu")
-                        .font(.system(size: 13, weight: .bold))
-                        .foregroundColor(.black)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 28)
-                        .background(skankBlue)
-                        .clipShape(Capsule())
+            // 3. 底部按鈕
+            HStack(spacing: 6) {
+                terminalButton(title: "Clear") {}
+                terminalButton(title: "Reload") {}
+                terminalButton(title: "Pick") {}
+                terminalButton(title: "Main Menu") {
+                    currentApp = .main // 返回主頁
                 }
             }
-            .padding(.horizontal, 10)
-            .frame(height: 50)
+            .padding(.horizontal, 4)
+            .padding(.vertical, 8)
             .background(Color.black)
-            .padding(.bottom, 20) // 預留底部安全區
-            .background(Color.black.ignoresSafeArea(edges: .bottom))
-            
         }
+        // 確保背景全黑並無視安全區
         .background(Color.black.ignoresSafeArea())
     }
     
-    // 生成無作用按鈕嘅 Helper
-    private func terminalButton(title: String) -> some View {
-        Button(action: {
-            // 冇任何作用
-        }) {
+    // 獨立抽出底部按鈕樣式
+    private func terminalButton(title: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
             Text(title)
-                .font(.system(size: 14, weight: .bold))
+                .font(.system(size: 13, weight: .bold))
                 .foregroundColor(.black)
                 .frame(maxWidth: .infinity)
-                .frame(height: 28)
+                .padding(.vertical, 6)
                 .background(skankBlue)
-                .clipShape(Capsule())
+                .cornerRadius(12)
         }
     }
 }
