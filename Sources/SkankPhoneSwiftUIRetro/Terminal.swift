@@ -7,9 +7,9 @@ struct TerminalView: View {
     let terminalText = """
     iperf Done
     kill: usage: kill [-s..or kill -l [sigspec]
-    No command in /usr/loc_c/subtests/custom.t
-    No command in /usr/loc_c/subtests/custom.t
-    No command in /usr/loc_c/subtests/custom.t
+    No command in /usr/loc_c/subtests/custom.txt
+    No command in /usr/loc_c/subtests/custom.txt
+    No command in /usr/loc_c/subtests/custom.txt
     """
     
     let skankBlue = Color(red: 0.2, green: 0.6, blue: 1.0)
