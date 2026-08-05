@@ -35,7 +35,7 @@ struct MoreView: View {
                         
                         Spacer().frame(height: 15)
                         
-                        moreButton(title: "Terminal") {}
+                        moreButton(title: "Terminal") {currentApp = .terminal}
                         
                         // Quit (退回主畫面，完美避開 unused result 警告)
                         moreButton(title: "Quit") {
