@@ -13,19 +13,15 @@ struct TestView: View {
     var body: some View {
         ZStack {
             if showTerminal {
-                // 直接呼叫之前寫好嘅 TerminalView
                 TerminalView(currentApp: $currentApp)
             } else if showATCommands {
-                // 打開 Send AT Commands 介面
-                SendATCommandsView(showATCommands: $showATCommands)
+                SendATCommandsView(currentApp: $currentApp)
             } else {
-                // 標準「新 App」排版結構
                 VStack(spacing: 0) {
                     StatusBarView()
                     
                     Spacer().frame(height: 20)
                     
-                    // 中間藍色按鈕列表
                     VStack(spacing: 12) {
                         testButton(title: "Ping google.com x10") {}
                         testButton(title: "ping google.com x10K") {}
@@ -44,7 +40,6 @@ struct TestView: View {
                     
                     Spacer()
                     
-                    // 底部 Main Menu 紅色按鈕
                     Button(action: {
                         currentApp = .main
                     }) {
@@ -62,7 +57,6 @@ struct TestView: View {
         }
     }
     
-    // 獨立抽出藍色按鈕樣式
     private func testButton(title: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(title)
@@ -78,7 +72,7 @@ struct TestView: View {
 
 // --- 2. Send AT Commands 介面 ---
 struct SendATCommandsView: View {
-    @Binding var showATCommands: Bool
+    @Binding var currentApp: AppState // 接收 currentApp 以實現直達主頁
     
     let skankBlue = Color(red: 0.2, green: 0.6, blue: 1.0)
     let skankRed = Color(red: 0.95, green: 0.25, blue: 0.0)
@@ -102,10 +96,11 @@ struct SendATCommandsView: View {
                     .padding(.vertical, 8)
                     .padding(.trailing, 4)
                 
-                // 右側橫向按鈕列 (利用旋轉達成橫向設計)
+                // 右側橫向按鈕列
                 VStack(spacing: 0) {
+                    // Exit 按鈕改為直達主頁
                     sideButton(title: "Exit", color: skankBlue) {
-                        showATCommands = false // 退出返回 Test 主選單
+                        currentApp = .main
                     }
                     sideButton(title: "Keyboard", color: skankRed) {}
                     sideButton(title: "Commands", color: skankRed) {}
@@ -113,7 +108,7 @@ struct SendATCommandsView: View {
                     
                     Spacer()
                 }
-                .frame(width: 44) // 確保 VStack 有足夠闊度裝住旋轉後嘅按鈕
+                .frame(width: 44)
                 .padding(.vertical, 8)
                 .padding(.trailing, 4)
             }
@@ -121,19 +116,18 @@ struct SendATCommandsView: View {
         .background(Color.black.ignoresSafeArea())
     }
     
-    // 處理橫向按鈕嘅佈局與旋轉
+    // 修正旋轉方向 (-90度)
     private func sideButton(title: String, color: Color, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(title)
                 .font(.system(size: 13, weight: .bold))
                 .foregroundColor(.black)
-                .frame(width: 95, height: 36) // 邏輯上嘅寬高 (決定按鈕形狀)
+                .frame(width: 95, height: 36)
                 .background(color)
                 .cornerRadius(6)
         }
-        // 旋轉後高度變成寬度，需要重新設定佔位空間以免重疊
         .frame(width: 36, height: 95)
-        .rotationEffect(.degrees(90)) // 順時針轉 90 度，符合圖中文字向下閱讀嘅方向
+        .rotationEffect(.degrees(-90)) // 修正文字方向
         .padding(.bottom, 2)
     }
 }
