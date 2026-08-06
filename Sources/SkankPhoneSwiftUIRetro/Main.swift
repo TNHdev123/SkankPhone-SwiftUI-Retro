@@ -128,7 +128,7 @@ struct RootView: View {
                 case .test:
                     TestView(currentApp: $currentApp)
                 case .hb3d:
-                    TestView(currentApp: $currentApp)
+                    HomeButton3DView(currentApp: $currentApp)
                 }
             }
             .ignoresSafeArea(edges: .top)
