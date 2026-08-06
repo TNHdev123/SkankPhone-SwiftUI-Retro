@@ -93,10 +93,13 @@ struct RealTouchCircleView: UIViewRepresentable {
         var resetDeepPressTimer: Timer?
         
         // --- Haptic Touch 狀態 ---
-        var hapticTouchDownTime: Date?
+        let hapticEngageDuration = 0.5 // iOS 觸發 Haptic Touch 的標準按住時間
+        var isHapticEngaged = false
+        var hasTriggeredVoice = false
+        var hapticPressTimer: Timer?
         var hapticVoiceTimer: Timer?
-        var hapticSwitchTimer: Timer?
-        var waitingForSecondTap = false
+        var hapticSwitchWindowTimer: Timer?
+        var waitingForSecondLightTap = false
         
         init(resultMessage: Binding<String>) {
             self._resultMessage = resultMessage
@@ -131,43 +134,64 @@ struct RealTouchCircleView: UIViewRepresentable {
             }
         }
         
-        // MARK: - Haptic Touch 邏輯 (純靠時長與放手)
+        // MARK: - Haptic Touch 邏輯 (精準按住判斷)
         func handleHapticBegan() {
-            triggerFeedback() // 按下震動
-            hapticTouchDownTime = Date()
-            
-            // 2 秒長按檢測 (Voice)
-            hapticVoiceTimer?.invalidate()
-            hapticVoiceTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: false) { [weak self] _ in
-                self?.triggerFeedback() // Voice 觸發震動提示
-                self?.resultMessage = "Haptic Touch: Voice"
-                self?.hapticTouchDownTime = nil // 標記為已消耗，放手不再觸發 Home/Switch
+            if waitingForSecondLightTap {
+                // 這是「1秒內的第二次輕點」按下動作
+                triggerFeedback()
+            } else {
+                // 第一次按下，開始計算是否達到 Haptic Touch 「按住」的標準
+                isHapticEngaged = false
+                hasTriggeredVoice = false
+                
+                // 1. 檢測是否按住達到 0.5 秒 (觸發 Haptic Touch)
+                hapticPressTimer?.invalidate()
+                hapticPressTimer = Timer.scheduledTimer(withTimeInterval: hapticEngageDuration, repeats: false) { [weak self] _ in
+                    self?.isHapticEngaged = true
+                    self?.triggerFeedback() // 「按住」成功時的震動
+                }
+                
+                // 2. 檢測是否按住達到 2 秒 (Voice)
+                hapticVoiceTimer?.invalidate()
+                hapticVoiceTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: false) { [weak self] _ in
+                    guard let self = self, self.isHapticEngaged else { return }
+                    self.hasTriggeredVoice = true
+                    self.triggerFeedback() // Voice 觸發震動
+                    self.resultMessage = "Haptic Touch: Voice"
+                }
             }
         }
         
         func handleHapticEnded() {
+            // 放手時馬上清除計時器，防止後續觸發
+            hapticPressTimer?.invalidate()
             hapticVoiceTimer?.invalidate()
-            guard hapticTouchDownTime != nil else { return } // 如果已經觸發 Voice，就唔做嘢
-            hapticTouchDownTime = nil
             
-            triggerFeedback() // 放手震動
-            
-            if waitingForSecondTap {
-                // 1秒內第二次點擊的放手
+            if waitingForSecondLightTap {
+                // 完成了「輕點一下的放手」
+                triggerFeedback() // 放手也有回饋
                 resultMessage = "Haptic Touch: Switch"
-                waitingForSecondTap = false
-                hapticSwitchTimer?.invalidate()
+                waitingForSecondLightTap = false
+                hapticSwitchWindowTimer?.invalidate()
             } else {
-                // 第一次放手
-                resultMessage = "Haptic Touch: Home"
-                waitingForSecondTap = true
-                hapticSwitchTimer?.invalidate()
-                
-                // 開啟 1 秒視窗等待第二次點擊
-                hapticSwitchTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: false) { [weak self] _ in
-                    self?.waitingForSecondTap = false
+                if hasTriggeredVoice {
+                    // 如果已經觸發了 Voice，放手就不做任何動作
+                    hasTriggeredVoice = false
+                } else if isHapticEngaged {
+                    // 達到了 Haptic Touch 的按住時間 (超過 0.5 秒)，現在放手
+                    triggerFeedback() // 「放手」的回饋
+                    resultMessage = "Haptic Touch: Home"
+                    
+                    // 開啟 1 秒內輕點等待視窗
+                    waitingForSecondLightTap = true
+                    hapticSwitchWindowTimer?.invalidate()
+                    hapticSwitchWindowTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: false) { [weak self] _ in
+                        self?.waitingForSecondLightTap = false
+                    }
                 }
+                // 注意：如果 isHapticEngaged 係 false，代表按住時間少於 0.5 秒 (純輕觸)，系統會直接忽略，符合你要「按住」嘅要求。
             }
+            isHapticEngaged = false
         }
         
         // MARK: - 真實 3D Touch 邏輯 (靠壓力 Force)
