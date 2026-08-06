@@ -7,6 +7,30 @@ enum AppState {
     case main, phone, camera, sms, web, media, network, power, more, terminal, playground, test
 }
 
+// --- 專為 plist 儲存 Display P3 顏色設計嘅結構 ---
+struct DisplayP3Color: Codable {
+    let r: CGFloat
+    let g: CGFloat
+    let b: CGFloat
+    let a: CGFloat
+    
+    // 將儲存嘅數值強制轉換為 SwiftUI 嘅 Display P3 Color
+    var swiftUIColor: Color {
+        return Color(.displayP3, red: r, green: g, blue: b, opacity: a)
+    }
+}
+
+// --- App 設定資料模型 (對應 Applications.plist) ---
+struct AppConfig: Codable, Identifiable {
+    var id: String { appID } // 滿足 Identifiable，方便 ForEach 使用
+    
+    let appID: String
+    let buttonName: String
+    let buttonColor: DisplayP3Color // 明確使用自訂嘅 Display P3 結構
+    let nameColor: DisplayP3Color
+    let targetView: String          // 對應 AppState 嘅字串，例如 "phone"，冇就填 "none"
+}
+
 @main
 struct SkankPhoneApp: App {
     var body: some Scene {
@@ -56,7 +80,7 @@ struct StatusBarView: View {
     }
 }
 
-// 根視圖：負責切換畫面（在此處進行全域安全區控制）
+// 根視圖：負責切換畫面
 struct RootView: View {
     @State private var currentApp: AppState = .main
     
@@ -64,7 +88,6 @@ struct RootView: View {
         ZStack {
             Color.black.ignoresSafeArea()
             
-            // 用 Group 包住切換邏輯，全域移除頂部安全區
             Group {
                 switch currentApp {
                 case .main:
@@ -102,23 +125,23 @@ struct RootView: View {
 struct MainMenuView: View {
     @Binding var currentApp: AppState
     
-    // 動態載入的 App 列表與桌布
-    @State private var buttonLabels: [String] = []
+    // 動態載入的 App 設定與桌布
+    @State private var installedApps: [AppConfig] = []
     @State private var wallpaper: UIImage? = nil
     
     let columns = [GridItem(.flexible(), spacing: 20), GridItem(.flexible(), spacing: 20)]
 
     var body: some View {
         ZStack {
-            // --- 背景層：Wallpaper 或 全黑 ---
+            // --- 背景層 ---
             if let bg = wallpaper {
                 Image(uiImage: bg)
                     .resizable()
                     .scaledToFill()
                     .ignoresSafeArea()
-                    .allowsHitTesting(false) // 確保 Wallpaper 不能夠直接互動
+                    .allowsHitTesting(false)
             } else {
-                Color.black.ignoresSafeArea() // 找不到 Wallpaper 就依然以全黑作底
+                Color.black.ignoresSafeArea()
             }
             
             // --- UI 互動層 ---
@@ -129,37 +152,17 @@ struct MainMenuView: View {
                 Spacer().frame(height: 25)
                 
                 LazyVGrid(columns: columns, spacing: 20) {
-                    ForEach(buttonLabels, id: \.self) { label in
+                    ForEach(installedApps) { app in
                         Button(action: {
-                            switch label { 
-                            case "Phone":
-                                currentApp = .phone
-                            case "SMS":
-                                currentApp = .sms
-                            case "Web":
-                                currentApp = .web
-                            case "Media":
-                                currentApp = .media
-                            case "Network\nSettings":
-                                currentApp = .network
-                            case "Power\nSettings":
-                                currentApp = .power
-                            case "More Other":
-                                currentApp = .more
-                            case "Playground":
-                                currentApp = .playground
-                            case "Test Tools":
-                                currentApp = .test
-                            default:
-                                print("\(label) tapped")
-                            }
+                            handleAppLaunch(targetView: app.targetView)
                         }) {
-                            Text(label)
+                            Text(app.buttonName)
                                 .multilineTextAlignment(.center)
-                                .foregroundColor(.black)
+                                // 直接調用結構入面嘅 swiftUIColor (已鎖定 Display P3)
+                                .foregroundColor(app.nameColor.swiftUIColor)
                                 .font(.system(size: 18, weight: .bold))
                                 .frame(maxWidth: .infinity, minHeight: 60)
-                                .background(Color(red: 0.2, green: 0.6, blue: 1.0))
+                                .background(app.buttonColor.swiftUIColor)
                                 .cornerRadius(12)
                         }
                     }
@@ -176,19 +179,48 @@ struct MainMenuView: View {
             }
         }
         .onAppear {
-            // 每次回到主畫面時，重新載入設定同桌布
-            buttonLabels = loadOrSetupAppList()
+            installedApps = loadOrSetupAppList()
             wallpaper = getLatestWallpaper()
         }
     }
     
-    // --- 讀取或建立 Applications.plist (轉用 PropertyListEncoder 更安全) ---
-    private func loadOrSetupAppList() -> [String] {
+    // 處理 App 啟動路由
+    private func handleAppLaunch(targetView: String) {
+        switch targetView.lowercased() {
+        case "phone": currentApp = .phone
+        case "camera": currentApp = .camera
+        case "sms": currentApp = .sms
+        case "web": currentApp = .web
+        case "media": currentApp = .media
+        case "network": currentApp = .network
+        case "power": currentApp = .power
+        case "more": currentApp = .more
+        case "terminal": currentApp = .terminal
+        case "playground": currentApp = .playground
+        case "test": currentApp = .test
+        case "none": break
+        default: print("未知目標視圖: \(targetView)")
+        }
+    }
+    
+    // --- 讀取或建立 Applications.plist ---
+    private func loadOrSetupAppList() -> [AppConfig] {
+        // 使用明確嘅 DisplayP3Color 初始化
+        let skankBlue = DisplayP3Color(r: 0.2, g: 0.6, b: 1.0, a: 1.0)
+        let blackColor = DisplayP3Color(r: 0.0, g: 0.0, b: 0.0, a: 1.0)
+        
+        // 預設的 App 列表
         let defaultApps = [
-            "Phone", "SMS", "Web", "Media",
-            "Network\nSettings", "Power\nSettings",
-            "More Other", "Playground",
-            "Test Tools", "Operator"
+            AppConfig(appID: "com.skank.phone", buttonName: "Phone", buttonColor: skankBlue, nameColor: blackColor, targetView: "phone"),
+            AppConfig(appID: "com.skank.sms", buttonName: "SMS", buttonColor: skankBlue, nameColor: blackColor, targetView: "sms"),
+            AppConfig(appID: "com.skank.web", buttonName: "Web", buttonColor: skankBlue, nameColor: blackColor, targetView: "web"),
+            AppConfig(appID: "com.skank.media", buttonName: "Media", buttonColor: skankBlue, nameColor: blackColor, targetView: "media"),
+            AppConfig(appID: "com.skank.network", buttonName: "Network\nSettings", buttonColor: skankBlue, nameColor: blackColor, targetView: "network"),
+            AppConfig(appID: "com.skank.power", buttonName: "Power\nSettings", buttonColor: skankBlue, nameColor: blackColor, targetView: "power"),
+            AppConfig(appID: "com.skank.more", buttonName: "More Other", buttonColor: skankBlue, nameColor: blackColor, targetView: "more"),
+            AppConfig(appID: "com.skank.playground", buttonName: "Playground", buttonColor: skankBlue, nameColor: blackColor, targetView: "playground"),
+            AppConfig(appID: "com.skank.test", buttonName: "Test Tools", buttonColor: skankBlue, nameColor: blackColor, targetView: "test"),
+            AppConfig(appID: "com.skank.operator", buttonName: "Operator", buttonColor: skankBlue, nameColor: blackColor, targetView: "none")
         ]
         
         guard let documentDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else { return defaultApps }
@@ -196,16 +228,18 @@ struct MainMenuView: View {
         let plistURL = systemDir.appendingPathComponent("Applications.plist")
         
         if FileManager.default.fileExists(atPath: plistURL.path) {
-            // 如果檔案存在，讀取 plist 內容
+            // 讀取現有 plist
             if let data = try? Data(contentsOf: plistURL),
-               let savedApps = try? PropertyListDecoder().decode([String].self, from: data) {
+               let savedApps = try? PropertyListDecoder().decode([AppConfig].self, from: data) {
                 return savedApps
             }
         } else {
-            // 如果冇，就自動製作資料夾同 plist
+            // 自動製作資料夾同 plist
             do {
                 try FileManager.default.createDirectory(at: systemDir, withIntermediateDirectories: true, attributes: nil)
-                let data = try PropertyListEncoder().encode(defaultApps)
+                let encoder = PropertyListEncoder()
+                encoder.outputFormat = .xml // 輸出 XML 格式方便後續直接用文字編輯器修改
+                let data = try encoder.encode(defaultApps)
                 try data.write(to: plistURL)
             } catch {
                 print("建立 Applications.plist 失敗: \(error)")
@@ -219,7 +253,6 @@ struct MainMenuView: View {
         guard let documentDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else { return nil }
         let wallpaperURL = documentDirectory.appendingPathComponent("System/Wallpaper")
         
-        // 檢查並建立資料夾
         if !FileManager.default.fileExists(atPath: wallpaperURL.path) {
             do {
                 try FileManager.default.createDirectory(at: wallpaperURL, withIntermediateDirectories: true, attributes: nil)
@@ -241,7 +274,6 @@ struct MainMenuView: View {
                 return date1 > date2
             }
             
-            // 取得最新一張
             if let latestURL = sortedFiles.first {
                 return UIImage(contentsOfFile: latestURL.path)
             }
