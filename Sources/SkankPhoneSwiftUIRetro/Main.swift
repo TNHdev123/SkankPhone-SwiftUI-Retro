@@ -4,7 +4,7 @@ import UIKit
 
 // 全域狀態：用嚟控制目前顯示咩畫面
 enum AppState {
-    case main, phone, camera, sms, web, media, network, power, more, terminal, playground, test
+    case main, phone, camera, sms, web, media, network, power, more, terminal, playground, test, hb3d
 }
 
 // --- 專為 plist 儲存 Display P3 顏色設計嘅結構 ---
@@ -114,6 +114,8 @@ struct RootView: View {
                     PlaygroundView(currentApp: $currentApp)
                 case .test:
                     TestView(currentApp: $currentApp)
+                case .hb3d:
+                    HomeButton3DView(currentApp: $currentApp)
                 }
             }
             .ignoresSafeArea(edges: .top)
@@ -199,6 +201,7 @@ struct MainMenuView: View {
         case "playground": currentApp = .playground
         case "test": currentApp = .test
         case "none": break
+        case "hb3d": currentApp = .hb3d
         default: print("未知目標視圖: \(targetView)")
         }
     }
