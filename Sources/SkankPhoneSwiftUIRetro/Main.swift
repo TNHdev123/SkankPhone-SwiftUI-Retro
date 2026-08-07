@@ -4,7 +4,7 @@ import UIKit
 
 // 全域狀態
 enum AppState {
-    case main, phone, camera, sms, web, media, network, power, more, terminal, playground, test, hb3d
+    case main, phone, camera, sms, web, media, network, power, more, terminal, playground, test, hb3d, purple
 }
 
 // --- App 設定資料模型 (精準對應 image_17.png 嘅純字串結構) ---
@@ -129,6 +129,8 @@ struct RootView: View {
                     TestView(currentApp: $currentApp)
                 case .hb3d:
                     HomeButton3DView(currentApp: $currentApp)
+                case .purple:
+                    PurpleView(currentApp: $currentApp)
                 }
             }
             .ignoresSafeArea(edges: .top)
@@ -214,6 +216,7 @@ struct MainMenuView: View {
         case "test": currentApp = .test
         case "none": break
         case "hb3d": currentApp = .hb3d
+        case "hb3d": currentApp = .purple
         default: print("未知目標視圖: \(targetView)")
         }
     }
