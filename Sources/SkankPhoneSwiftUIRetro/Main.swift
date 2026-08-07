@@ -216,7 +216,7 @@ struct MainMenuView: View {
         case "test": currentApp = .test
         case "none": break
         case "hb3d": currentApp = .hb3d
-        case "hb3d": currentApp = .purple
+        case "purple": currentApp = .purple
         default: print("未知目標視圖: \(targetView)")
         }
     }
