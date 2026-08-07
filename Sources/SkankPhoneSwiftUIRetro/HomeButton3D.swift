@@ -182,10 +182,10 @@ struct RealTouchCircleView: UIViewRepresentable {
                     triggerFeedback() // 「放手」的回饋
                     resultMessage = "Haptic Touch: Home"
                     
-                    // 開啟 1 秒內輕點等待視窗
+                    // 開啟 0.5 秒內輕點等待視窗
                     waitingForSecondLightTap = true
                     hapticSwitchWindowTimer?.invalidate()
-                    hapticSwitchWindowTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: false) { [weak self] _ in
+                    hapticSwitchWindowTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { [weak self] _ in
                         self?.waitingForSecondLightTap = false
                     }
                 }
